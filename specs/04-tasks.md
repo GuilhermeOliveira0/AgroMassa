@@ -82,6 +82,8 @@
 
 ### T04 - Criar primeira migracao e utilitarios de acesso ao banco
 
+**Status**: Concluida
+
 **Objetivo**: preparar a persistencia inicial e o cliente Prisma reutilizavel.
 **Arquivos provaveis envolvidos**: `prisma/migrations/*`, `src/lib/db/prisma.ts`, `package.json`
 **Passos de implementacao**:
