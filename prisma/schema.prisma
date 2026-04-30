@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ProductCategory {
+  TRATORES     @map("tratores")
+  IMPLEMENTOS @map("implementos")
+
+  @@map("product_category")
+}
+
+enum ProductCondition {
+  NOVO     @map("novo")
+  USADO    @map("usado")
+  SEMINOVO @map("seminovo")
+
+  @@map("product_condition")
+}
+
+enum ProductStatus {
+  DISPONIVEL   @map("disponivel")
+  VENDIDO      @map("vendido")
+  SOB_CONSULTA @map("sob_consulta")
+  ALUGADO      @map("alugado")
+  RASCUNHO     @map("rascunho")
+
+  @@map("product_status")
+}
+
+model AdminUser {
+  id           String    @id @default(uuid()) @db.Uuid
+  name         String    @db.VarChar(120)
+  email        String    @unique @db.VarChar(190)
+  passwordHash String    @map("password_hash") @db.VarChar(255)
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at") @db.Timestamp(6)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  createdProducts    Product[]     @relation("ProductCreatedBy")
+  updatedProducts    Product[]     @relation("ProductUpdatedBy")
+  updatedSiteSettings SiteSetting[] @relation("SiteSettingsUpdatedBy")
+
+  @@map("admin_users")
+}
+
+model SiteSetting {
+  id                String   @id @default(uuid()) @db.Uuid
+  companyName       String   @map("company_name") @db.VarChar(160)
+  logoPath          String   @map("logo_path") @db.VarChar(255)
+  institutionalText String   @map("institutional_text") @db.Text
+  servicesText      String   @map("services_text") @db.Text
+  phoneDisplay      String   @map("phone_display") @db.VarChar(40)
+  whatsappDisplay   String   @map("whatsapp_display") @db.VarChar(40)
+  whatsappDigits    String   @map("whatsapp_digits") @db.VarChar(20)
+  city              String   @db.VarChar(120)
+  state             String   @db.VarChar(2)
+  updatedByAdminId  String   @map("updated_by_admin_id") @db.Uuid
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  updatedByAdmin AdminUser @relation("SiteSettingsUpdatedBy", fields: [updatedByAdminId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("site_settings")
+}
+
+model Product {
+  id                   String            @id @default(uuid()) @db.Uuid
+  slug                 String            @unique @db.VarChar(220)
+  name                 String            @db.VarChar(180)
+  category             ProductCategory?
+  subcategory          String?           @db.VarChar(80)
+  brand                String?           @db.VarChar(120)
+  model                String?           @db.VarChar(120)
+  year                 Int?
+  condition            ProductCondition?
+  description          String?           @db.Text
+  technicalSpecs       String?           @map("technical_specs") @db.Text
+  priceCents           Int?              @map("price_cents")
+  priceVisible         Boolean           @default(true) @map("price_visible")
+  status               ProductStatus     @default(RASCUNHO)
+  city                 String?           @db.VarChar(120)
+  state                String?           @db.VarChar(2)
+  isFeatured           Boolean           @default(false) @map("is_featured")
+  isPublicVisible      Boolean           @default(false) @map("is_public_visible")
+  isArchived           Boolean           @default(false) @map("is_archived")
+  mainImageId          String?           @unique @map("main_image_id") @db.Uuid
+  searchTextNormalized String            @default("") @map("search_text_normalized") @db.Text
+  createdByAdminId     String            @map("created_by_admin_id") @db.Uuid
+  updatedByAdminId     String            @map("updated_by_admin_id") @db.Uuid
+  publishedAt          DateTime?         @map("published_at") @db.Timestamp(6)
+  createdAt            DateTime          @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt            DateTime          @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  createdByAdmin AdminUser      @relation("ProductCreatedBy", fields: [createdByAdminId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  updatedByAdmin AdminUser      @relation("ProductUpdatedBy", fields: [updatedByAdminId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  images         ProductImage[] @relation("ProductImages")
+  mainImage      ProductImage?  @relation("ProductMainImage", fields: [mainImageId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@map("products")
+}
+
+model ProductImage {
+  id               String   @id @default(uuid()) @db.Uuid
+  productId        String   @map("product_id") @db.Uuid
+  storageKey       String   @unique @map("storage_key") @db.VarChar(255)
+  publicUrl        String   @map("public_url") @db.VarChar(500)
+  originalFilename String   @map("original_filename") @db.VarChar(255)
+  mimeType         String   @map("mime_type") @db.VarChar(80)
+  fileSizeBytes    Int      @map("file_size_bytes")
+  width            Int?
+  height           Int?
+  sortOrder        Int      @default(0) @map("sort_order")
+  isMain           Boolean  @default(false) @map("is_main")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  product        Product  @relation("ProductImages", fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  mainForProduct Product? @relation("ProductMainImage")
+
+  @@map("product_images")
+}

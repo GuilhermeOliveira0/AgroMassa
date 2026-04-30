@@ -63,6 +63,8 @@
 
 ### T03 - Criar schema Prisma inicial com tabelas e enums
 
+**Status**: Concluida
+
 **Objetivo**: modelar `admin_users`, `site_settings`, `products` e `product_images` conforme o design.
 **Arquivos provaveis envolvidos**: `prisma/schema.prisma`
 **Passos de implementacao**:
