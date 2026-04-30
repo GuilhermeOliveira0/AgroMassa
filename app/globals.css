@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@theme {
+  --color-agromassa-green: #39b31a;
+  --color-agromassa-forest: #0d3b12;
+  --color-agromassa-ink: #111111;
+  --color-agromassa-cream: #f5f7f4;
+  --color-agromassa-muted: #4d5a4c;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+}
