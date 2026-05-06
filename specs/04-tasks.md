@@ -163,6 +163,8 @@
 
 ### T08 - Criar tela de login administrativa
 
+**Status**: Concluida
+
 **Objetivo**: disponibilizar o formulario visual de login em `/admin/login`.
 **Arquivos provaveis envolvidos**: `app/admin/login/page.tsx`, `src/components/admin/login-form.tsx`, `src/validators/auth/login.ts`
 **Passos de implementacao**:
