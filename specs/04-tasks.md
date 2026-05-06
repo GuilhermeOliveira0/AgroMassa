@@ -101,6 +101,8 @@
 
 ### T05 - Criar seed inicial de administrador e configuracoes institucionais
 
+**Status**: Concluida
+
 **Objetivo**: popular o banco com o administrador inicial e os dados institucionais basicos.
 **Arquivos provaveis envolvidos**: `prisma/seed.ts`, `.env.example`, `package.json`
 **Passos de implementacao**:
@@ -118,6 +120,8 @@
 **Dependencias**: T04
 
 ### T06 - Preparar extensoes e indices de busca do banco
+
+**Status**: Concluida
 
 **Objetivo**: habilitar base tecnica para busca normalizada e listagem eficiente.
 **Arquivos provaveis envolvidos**: `prisma/migrations/*`, possivelmente `prisma/schema.prisma`
@@ -139,6 +143,8 @@
 ## Fase 3. Autenticacao administrativa
 
 ### T07 - Configurar Auth.js com Credentials Provider
+
+**Status**: Concluida
 
 **Objetivo**: criar a configuracao central de autenticacao para o administrador.
 **Arquivos provaveis envolvidos**: `src/lib/auth/auth.ts`, `app/api/auth/[...nextauth]/route.ts`, `src/lib/auth/config.ts`

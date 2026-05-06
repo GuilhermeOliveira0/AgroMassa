@@ -101,6 +101,12 @@ model Product {
   images         ProductImage[] @relation("ProductImages")
   mainImage      ProductImage?  @relation("ProductMainImage", fields: [mainImageId], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
+  @@index([category], map: "products_category_idx")
+  @@index([condition], map: "products_condition_idx")
+  @@index([brand], map: "products_brand_idx")
+  @@index([status], map: "products_status_idx")
+  @@index([isPublicVisible, isArchived, isFeatured(sort: Desc), createdAt(sort: Desc)], map: "products_public_listing_idx")
+  @@index([searchTextNormalized(ops: raw("gin_trgm_ops"))], type: Gin, map: "products_search_text_trgm_idx")
   @@map("products")
 }
 
