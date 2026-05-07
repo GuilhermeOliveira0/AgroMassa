@@ -1,7 +1,12 @@
 import type { PublicProductDetail } from "@/features/products/get-public-product-by-slug";
+import {
+  buildProductWhatsAppMessage,
+  buildWhatsAppUrl,
+} from "@/lib/utils/whatsapp";
 
 type ProductDetailProps = {
   product: PublicProductDetail;
+  whatsappPhone: string;
 };
 
 const categoryLabels: Record<string, string> = {
@@ -55,7 +60,16 @@ function DetailItem({
   );
 }
 
-export function ProductDetail({ product }: ProductDetailProps) {
+export function ProductDetail({ product, whatsappPhone }: ProductDetailProps) {
+  const priceLabel = formatPrice(product);
+  const whatsappUrl = buildWhatsAppUrl({
+    message: buildProductWhatsAppMessage({
+      productName: product.name,
+      productPath: `/produtos/${product.slug}`,
+    }),
+    phone: whatsappPhone,
+  });
+
   return (
     <section className="grid gap-6">
       <div className="rounded-lg border border-agromassa-border bg-white p-5 sm:p-6">
@@ -81,7 +95,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
             Preco
           </p>
           <p className="mt-1 text-3xl font-black text-agromassa-forest">
-            {formatPrice(product)}
+            {priceLabel}
           </p>
         </div>
       </div>
@@ -115,6 +129,17 @@ export function ProductDetail({ product }: ProductDetailProps) {
           Entre em contato com a equipe para confirmar disponibilidade,
           negociacao e condicoes comerciais deste produto.
         </p>
+        {whatsappUrl ? (
+          <a
+            aria-label={`Chamar no WhatsApp sobre ${product.name}`}
+            className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-md bg-agromassa-green px-5 text-sm font-black text-white transition hover:bg-[#2f9714]"
+            href={whatsappUrl}
+            rel="noreferrer"
+            target="_blank"
+          >
+            Chamar no WhatsApp
+          </a>
+        ) : null}
       </div>
     </section>
   );

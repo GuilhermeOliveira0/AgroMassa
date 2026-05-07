@@ -390,6 +390,8 @@
 
 ### T19 - Aplicar CTAs de WhatsApp na home, cards e detalhe
 
+**Status**: Concluida
+
 **Objetivo**: usar o utilitario central em todos os pontos publicos de conversao.
 **Arquivos provaveis envolvidos**: `src/components/public/home-hero.tsx`, `src/components/public/product-card.tsx`, `src/components/public/product-detail.tsx`
 **Passos de implementacao**:

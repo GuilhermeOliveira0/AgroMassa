@@ -1,12 +1,22 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import {
+  buildInstitutionalWhatsAppMessage,
+  buildWhatsAppUrl,
+} from "@/lib/utils/whatsapp";
+
 const navigationItems = [
   { href: "/", label: "Inicio" },
   { href: "/produtos", label: "Produtos" },
 ];
 
 export function SiteHeader() {
+  const whatsappUrl = buildWhatsAppUrl({
+    message: buildInstitutionalWhatsAppMessage(),
+    phone: "5517997278876",
+  });
+
   return (
     <header className="sticky top-0 z-40 border-b border-black/10 bg-white/95 backdrop-blur">
       <div className="mx-auto flex min-h-20 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
@@ -45,14 +55,16 @@ export function SiteHeader() {
               {item.label}
             </Link>
           ))}
-          <a
-            className="hidden rounded-md bg-agromassa-green px-4 py-2 text-sm font-black text-white transition hover:bg-[#2f9714] sm:inline-flex"
-            href="https://wa.me/5517997278876"
-            rel="noreferrer"
-            target="_blank"
-          >
-            WhatsApp
-          </a>
+          {whatsappUrl ? (
+            <a
+              className="hidden rounded-md bg-agromassa-green px-4 py-2 text-sm font-black text-white transition hover:bg-[#2f9714] sm:inline-flex"
+              href={whatsappUrl}
+              rel="noreferrer"
+              target="_blank"
+            >
+              WhatsApp
+            </a>
+          ) : null}
         </nav>
       </div>
     </header>

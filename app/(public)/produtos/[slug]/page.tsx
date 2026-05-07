@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { ProductDetail } from "@/components/public/product-detail";
 import { ProductGallery } from "@/components/public/product-gallery";
+import { getSiteSettings } from "@/features/institutional/get-site-settings";
 import { getPublicProductBySlug } from "@/features/products/get-public-product-by-slug";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +18,10 @@ export default async function ProductDetailPage({
   params,
 }: ProductDetailPageProps) {
   const { slug } = await params;
-  const product = await getPublicProductBySlug(slug);
+  const [product, settings] = await Promise.all([
+    getPublicProductBySlug(slug),
+    getSiteSettings(),
+  ]);
 
   if (!product) {
     notFound();
@@ -45,7 +49,10 @@ export default async function ProductDetailPage({
       <section className="px-4 py-10 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:items-start">
           <ProductGallery product={product} />
-          <ProductDetail product={product} />
+          <ProductDetail
+            product={product}
+            whatsappPhone={settings.whatsappDigits}
+          />
         </div>
       </section>
     </main>

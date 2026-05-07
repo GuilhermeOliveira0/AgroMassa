@@ -1,4 +1,8 @@
 import type { PublicSiteSettings } from "@/features/institutional/get-site-settings";
+import {
+  buildInstitutionalWhatsAppMessage,
+  buildWhatsAppUrl,
+} from "@/lib/utils/whatsapp";
 
 type AboutSectionProps = {
   settings: PublicSiteSettings;
@@ -7,7 +11,10 @@ type AboutSectionProps = {
 const serviceHighlights = ["Compra", "Venda", "Troca", "Locacao"];
 
 export function AboutSection({ settings }: AboutSectionProps) {
-  const whatsappUrl = `https://wa.me/${settings.whatsappDigits}`;
+  const whatsappUrl = buildWhatsAppUrl({
+    message: buildInstitutionalWhatsAppMessage(),
+    phone: settings.whatsappDigits,
+  });
 
   return (
     <section className="bg-agromassa-cream px-4 py-14 sm:px-6 lg:px-8">
@@ -64,14 +71,16 @@ export function AboutSection({ settings }: AboutSectionProps) {
               </dd>
             </div>
           </dl>
-          <a
-            className="mt-7 inline-flex min-h-12 w-full items-center justify-center rounded-md bg-agromassa-forest px-5 text-sm font-black text-white transition hover:bg-agromassa-ink"
-            href={whatsappUrl}
-            rel="noreferrer"
-            target="_blank"
-          >
-            Falar com a AgroMassa
-          </a>
+          {whatsappUrl ? (
+            <a
+              className="mt-7 inline-flex min-h-12 w-full items-center justify-center rounded-md bg-agromassa-forest px-5 text-sm font-black text-white transition hover:bg-agromassa-ink"
+              href={whatsappUrl}
+              rel="noreferrer"
+              target="_blank"
+            >
+              Falar com a AgroMassa
+            </a>
+          ) : null}
         </aside>
       </div>
     </section>

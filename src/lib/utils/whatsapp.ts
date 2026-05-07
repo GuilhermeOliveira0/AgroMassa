@@ -7,6 +7,7 @@ export type BuildWhatsAppUrlParams = {
 };
 
 export type ProductWhatsAppMessageParams = {
+  productPath?: string | null;
   productName: string;
 };
 
@@ -34,9 +35,21 @@ export function normalizeWhatsAppPhone(
 }
 
 export function buildProductWhatsAppMessage({
+  productPath,
   productName,
 }: ProductWhatsAppMessageParams): string {
-  return `Ola, tenho interesse no produto ${productName} anunciado no site AgroMassa. Pode me passar mais informacoes?`;
+  const safeProductPath = productPath?.trim();
+
+  return [
+    "Ola! Tenho interesse neste produto:",
+    "",
+    `Produto: ${productName}`,
+    safeProductPath ? `Link: ${safeProductPath}` : null,
+    "",
+    "Gostaria de mais informacoes.",
+  ]
+    .filter((messagePart): messagePart is string => messagePart !== null)
+    .join("\n");
 }
 
 export function buildInstitutionalWhatsAppMessage(): string {

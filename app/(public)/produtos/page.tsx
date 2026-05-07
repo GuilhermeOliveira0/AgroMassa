@@ -5,6 +5,7 @@ import {
   publicListProductBrands,
   publicListProductsPage,
 } from "@/features/products/public-list-products";
+import { getSiteSettings } from "@/features/institutional/get-site-settings";
 import { parsePublicProductFilters } from "@/validators/products/public-filters";
 
 export const dynamic = "force-dynamic";
@@ -16,9 +17,10 @@ type ProductsPageProps = {
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
   const currentSearchParams = (await searchParams) ?? {};
   const filters = parsePublicProductFilters(currentSearchParams);
-  const [productPage, brands] = await Promise.all([
+  const [productPage, brands, settings] = await Promise.all([
     publicListProductsPage(filters),
     publicListProductBrands(),
+    getSiteSettings(),
   ]);
   const { hasMore, nextPage, products } = productPage;
 
@@ -54,7 +56,11 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           {products.length > 0 ? (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  whatsappPhone={settings.whatsappDigits}
+                />
               ))}
             </div>
           ) : (

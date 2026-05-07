@@ -1,11 +1,16 @@
 import Link from "next/link";
 
 import type { PublicProductListItem } from "@/features/products/public-list-products";
+import {
+  buildProductWhatsAppMessage,
+  buildWhatsAppUrl,
+} from "@/lib/utils/whatsapp";
 
 import { ProductCardImage } from "./product-card-image";
 
 type ProductCardProps = {
   product: PublicProductListItem;
+  whatsappPhone: string;
 };
 
 const categoryLabels: Record<string, string> = {
@@ -38,7 +43,14 @@ function formatPrice(product: PublicProductListItem) {
   }).format(product.priceCents / 100);
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, whatsappPhone }: ProductCardProps) {
+  const whatsappUrl = buildWhatsAppUrl({
+    message: buildProductWhatsAppMessage({
+      productName: product.name,
+    }),
+    phone: whatsappPhone,
+  });
+
   return (
     <article className="group overflow-hidden rounded-lg border border-agromassa-border bg-white">
       <div className="relative aspect-[4/3] overflow-hidden bg-agromassa-ink">
@@ -103,12 +115,25 @@ export function ProductCard({ product }: ProductCardProps) {
           </p>
         </div>
 
-        <Link
-          className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-md bg-agromassa-forest px-4 text-sm font-black text-white transition hover:bg-agromassa-ink"
-          href={`/produtos/${product.slug}`}
-        >
-          Ver detalhes
-        </Link>
+        <div className="mt-5 grid gap-2">
+          {whatsappUrl ? (
+            <a
+              aria-label={`Chamar no WhatsApp sobre ${product.name}`}
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-agromassa-green px-4 text-sm font-black text-white transition hover:bg-[#2f9714]"
+              href={whatsappUrl}
+              rel="noreferrer"
+              target="_blank"
+            >
+              Chamar no WhatsApp
+            </a>
+          ) : null}
+          <Link
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-agromassa-border px-4 text-sm font-black text-agromassa-forest transition hover:border-agromassa-forest"
+            href={`/produtos/${product.slug}`}
+          >
+            Ver detalhes
+          </Link>
+        </div>
       </div>
     </article>
   );
