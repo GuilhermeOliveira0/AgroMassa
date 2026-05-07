@@ -182,6 +182,8 @@
 
 ### T09 - Proteger rotas administrativas com middleware
 
+**Status**: Concluida
+
 **Objetivo**: impedir acesso anonimo a `/admin/*`, exceto `/admin/login`.
 **Arquivos provaveis envolvidos**: `middleware.ts` ou `proxy.ts`, `src/lib/auth/auth.ts`
 **Passos de implementacao**:
@@ -203,6 +205,8 @@
 
 ### T10 - Criar shell publico global com header e footer
 
+**Status**: Concluida
+
 **Objetivo**: estruturar a base visual publica do site com identidade AgroMassa.
 **Arquivos provaveis envolvidos**: `app/layout.tsx`, `src/components/public/site-header.tsx`, `src/components/public/site-footer.tsx`, `app/globals.css`
 **Passos de implementacao**:
@@ -219,6 +223,8 @@
 **Dependencias**: T02
 
 ### T11 - Implementar home institucional inicial
+
+**Status**: Concluida
 
 **Objetivo**: criar a pagina institucional publica da AgroMassa lendo configuracoes do banco.
 **Arquivos provaveis envolvidos**: `app/(public)/page.tsx`, `src/features/institutional/get-site-settings.ts`, `src/components/public/home-hero.tsx`, `src/components/public/about-section.tsx`
@@ -241,6 +247,8 @@
 
 ### T12 - Criar consulta publica de produtos com regras de visibilidade
 
+**Status**: Concluida
+
 **Objetivo**: implementar a regra de listagem publica apenas para produtos validos e visiveis.
 **Arquivos provaveis envolvidos**: `src/features/products/public-list-products.ts`, `src/lib/search/normalize.ts`, possivelmente `src/types/product.ts`
 **Passos de implementacao**:
@@ -256,21 +264,24 @@
 - validar ordem de retorno entre destaque e nao destaque
 **Dependencias**: T06
 
-### T13 - Implementar filtros e busca do catalogo
+### T13 - Criar pagina publica de catalogo/listagem de produtos
 
-**Objetivo**: permitir busca por texto e filtros de categoria, condicao, marca e status.
-**Arquivos provaveis envolvidos**: `src/features/products/public-list-products.ts`, `src/validators/products/public-filters.ts`, `src/lib/search/normalize.ts`
+**Status**: Concluida
+
+**Objetivo**: montar a tela `/produtos` consumindo a consulta publica da T12 e exibindo cards de produtos publicos.
+**Arquivos provaveis envolvidos**: `app/(public)/produtos/page.tsx`, `src/components/public/product-card.tsx`
 **Passos de implementacao**:
-- aceitar parametros de query string
-- normalizar texto de busca
-- aplicar filtros combinaveis
+- renderizar lista de cards
+- consumir a consulta publica existente sem duplicar regras de visibilidade
+- exibir estado vazio e informacoes resumidas do produto
 **Criterios de conclusao**:
-- busca ignora acentos e caixa
-- filtros combinados alteram a consulta corretamente
-- estado vazio e detectavel na camada de dados
+- catalogo exibe nome, categoria, condicao, status, preco e foto principal
+- estado vazio aparece quando apropriado
+- apenas produtos publicos validos aparecem
 **Testes manuais necessarios**:
-- buscar termos com e sem acento
-- filtrar por marca, status, categoria e condicao ao mesmo tempo
+- abrir `/produtos`
+- validar responsividade dos cards
+- confirmar que rascunhos, arquivados, invisiveis e produtos sem imagem principal nao aparecem
 **Dependencias**: T12
 
 ### T14 - Criar pagina publica de catalogo com cards

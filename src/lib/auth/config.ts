@@ -4,13 +4,12 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { z } from "zod";
 
 import { prisma } from "@/lib/db/prisma";
+import { authSecret } from "@/lib/auth/secret";
 
 const loginSchema = z.object({
   email: z.string().trim().email(),
   password: z.string().min(1),
 });
-const authSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
-
 async function getAdminForAuth(email: string) {
   return prisma.adminUser.findUnique({
     where: {
