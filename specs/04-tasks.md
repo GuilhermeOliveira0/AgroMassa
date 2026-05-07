@@ -371,6 +371,8 @@
 
 ### T18 - Criar utilitario central de link do WhatsApp
 
+**Status**: Concluida
+
 **Objetivo**: centralizar a geracao do link `wa.me` com mensagem padrao e nome do produto.
 **Arquivos provaveis envolvidos**: `src/lib/utils/whatsapp.ts`, possivelmente `src/types/product.ts`
 **Passos de implementacao**:

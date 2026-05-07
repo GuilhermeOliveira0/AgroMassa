@@ -2,13 +2,20 @@ import Image from "next/image";
 import Link from "next/link";
 
 import type { PublicSiteSettings } from "@/features/institutional/get-site-settings";
+import {
+  buildInstitutionalWhatsAppMessage,
+  buildWhatsAppUrl,
+} from "@/lib/utils/whatsapp";
 
 type HomeHeroProps = {
   settings: PublicSiteSettings;
 };
 
 export function HomeHero({ settings }: HomeHeroProps) {
-  const whatsappUrl = `https://wa.me/${settings.whatsappDigits}`;
+  const whatsappUrl = buildWhatsAppUrl({
+    message: buildInstitutionalWhatsAppMessage(),
+    phone: settings.whatsappDigits,
+  });
   const location = `${settings.city}, ${settings.state}`;
 
   return (
@@ -25,14 +32,16 @@ export function HomeHero({ settings }: HomeHeroProps) {
             {settings.institutionalText}
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <a
-              className="inline-flex min-h-12 items-center justify-center rounded-md bg-agromassa-green px-5 text-sm font-black text-white transition hover:bg-[#2f9714]"
-              href={whatsappUrl}
-              rel="noreferrer"
-              target="_blank"
-            >
-              Chamar no WhatsApp
-            </a>
+            {whatsappUrl ? (
+              <a
+                className="inline-flex min-h-12 items-center justify-center rounded-md bg-agromassa-green px-5 text-sm font-black text-white transition hover:bg-[#2f9714]"
+                href={whatsappUrl}
+                rel="noreferrer"
+                target="_blank"
+              >
+                Chamar no WhatsApp
+              </a>
+            ) : null}
             <Link
               className="inline-flex min-h-12 items-center justify-center rounded-md border border-white/18 px-5 text-sm font-black text-white transition hover:border-white/40 hover:bg-white/8"
               href="#servicos"
