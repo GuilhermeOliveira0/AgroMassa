@@ -451,6 +451,8 @@
 
 ### T22 - Criar formulario administrativo de produto em modo rascunho/publicacao
 
+**Status**: Concluida
+
 **Objetivo**: disponibilizar formulario base para criar e editar produtos.
 **Arquivos provaveis envolvidos**: `src/components/admin/product-form.tsx`, `app/admin/produtos/novo/page.tsx`, `app/admin/produtos/[id]/page.tsx`, `src/validators/products/admin-product.ts`
 **Passos de implementacao**:
