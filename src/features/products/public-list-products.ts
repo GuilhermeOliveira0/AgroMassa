@@ -1,6 +1,10 @@
 import { ProductStatus, type Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
+import { normalizeSearchText } from "@/lib/search/normalize";
+import type { PublicProductFilterParams } from "@/validators/products/public-filters";
+
+export const PUBLIC_PRODUCTS_PAGE_SIZE = 9;
 
 export type PublicProductListItem = {
   id: string;
@@ -160,9 +164,44 @@ function toPublicProductListItem(
   };
 }
 
-export async function publicListProducts(): Promise<PublicProductListItem[]> {
+function buildPublicProductWhere(
+  filters: PublicProductFilterParams,
+): Prisma.ProductWhereInput {
+  const searchFilters: Prisma.ProductWhereInput[] = [];
+
+  if (filters.q) {
+    searchFilters.push({
+      searchTextNormalized: {
+        contains: filters.q,
+      },
+    });
+  }
+
+  if (filters.marca) {
+    searchFilters.push({
+      brand: {
+        contains: filters.marca,
+        mode: "insensitive",
+      },
+    });
+  }
+
+  return {
+    AND: [
+      publicProductVisibilityWhere,
+      filters.categoria ? { category: filters.categoria } : {},
+      filters.condicao ? { condition: filters.condicao } : {},
+      filters.status ? { status: filters.status } : {},
+      ...searchFilters,
+    ],
+  };
+}
+
+export async function publicListProducts(
+  filters: PublicProductFilterParams = { page: 1 },
+): Promise<PublicProductListItem[]> {
   const products = await prisma.product.findMany({
-    where: publicProductVisibilityWhere,
+    where: buildPublicProductWhere(filters),
     orderBy: [
       {
         isFeatured: "desc",
@@ -180,4 +219,72 @@ export async function publicListProducts(): Promise<PublicProductListItem[]> {
   return products
     .filter(isCompletePublicProduct)
     .map(toPublicProductListItem);
+}
+
+export type PublicProductListPage = {
+  hasMore: boolean;
+  nextPage: number | null;
+  page: number;
+  pageSize: number;
+  products: PublicProductListItem[];
+};
+
+export async function publicListProductsPage(
+  filters: PublicProductFilterParams,
+  pageSize = PUBLIC_PRODUCTS_PAGE_SIZE,
+): Promise<PublicProductListPage> {
+  const page = Math.max(filters.page, 1);
+  const visibleLimit = page * pageSize;
+  const products = await prisma.product.findMany({
+    orderBy: [
+      {
+        isFeatured: "desc",
+      },
+      {
+        createdAt: "desc",
+      },
+      {
+        id: "desc",
+      },
+    ],
+    select: publicProductListSelect,
+    take: visibleLimit + 1,
+    where: buildPublicProductWhere(filters),
+  });
+
+  const visibleProducts = products
+    .slice(0, visibleLimit)
+    .filter(isCompletePublicProduct)
+    .map(toPublicProductListItem);
+
+  return {
+    hasMore: products.length > visibleLimit,
+    nextPage: products.length > visibleLimit ? page + 1 : null,
+    page,
+    pageSize,
+    products: visibleProducts,
+  };
+}
+
+export async function publicListProductBrands(): Promise<string[]> {
+  const products = await prisma.product.findMany({
+    distinct: ["brand"],
+    orderBy: {
+      brand: "asc",
+    },
+    select: {
+      brand: true,
+    },
+    where: publicProductVisibilityWhere,
+  });
+
+  return products
+    .map((product) => product.brand)
+    .filter((brand): brand is string => Boolean(brand))
+    .filter(
+      (brand, index, brands) =>
+        brands.findIndex(
+          (item) => normalizeSearchText(item) === normalizeSearchText(brand),
+        ) === index,
+    );
 }

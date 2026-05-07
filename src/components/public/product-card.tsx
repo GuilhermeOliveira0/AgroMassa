@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { PublicProductListItem } from "@/features/products/public-list-products";
 
 import { ProductCardImage } from "./product-card-image";
@@ -100,6 +102,13 @@ export function ProductCard({ product }: ProductCardProps) {
             {formatPrice(product)}
           </p>
         </div>
+
+        <Link
+          className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-md bg-agromassa-forest px-4 text-sm font-black text-white transition hover:bg-agromassa-ink"
+          href={`/produtos/${product.slug}`}
+        >
+          Ver detalhes
+        </Link>
       </div>
     </article>
   );

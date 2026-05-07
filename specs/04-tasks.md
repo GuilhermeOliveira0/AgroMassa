@@ -286,6 +286,8 @@
 
 ### T14 - Criar pagina publica de catalogo com cards
 
+**Status**: Concluida
+
 **Objetivo**: montar a tela `/produtos` consumindo a consulta publica e exibindo cards.
 **Arquivos provaveis envolvidos**: `app/(public)/produtos/page.tsx`, `src/components/public/product-card.tsx`, `src/components/public/catalog-filters.tsx`
 **Passos de implementacao**:
@@ -302,6 +304,8 @@
 **Dependencias**: T10, T13
 
 ### T15 - Implementar comportamento de "Carregar mais"
+
+**Status**: Concluida
 
 **Objetivo**: adicionar carregamento progressivo do catalogo sem paginacao numerica.
 **Arquivos provaveis envolvidos**: `app/(public)/produtos/page.tsx`, `src/components/public/load-more-button.tsx`, `src/features/products/public-list-products.ts`
@@ -324,6 +328,8 @@
 
 ### T16 - Criar consulta publica de detalhe por slug
 
+**Status**: Concluida
+
 **Objetivo**: buscar um produto publico unico para a rota `/produtos/[slug]`.
 **Arquivos provaveis envolvidos**: `src/features/products/get-public-product-by-slug.ts`
 **Passos de implementacao**:
@@ -340,6 +346,8 @@
 **Dependencias**: T12
 
 ### T17 - Implementar pagina dedicada de detalhes do produto
+
+**Status**: Concluida
 
 **Objetivo**: renderizar a pagina `/produtos/[slug]` com galeria, dados tecnicos e CTA.
 **Arquivos provaveis envolvidos**: `app/(public)/produtos/[slug]/page.tsx`, `src/components/public/product-gallery.tsx`, `src/components/public/product-detail.tsx`

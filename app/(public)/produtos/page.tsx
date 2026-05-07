@@ -1,10 +1,26 @@
+import { CatalogFilters } from "@/components/public/catalog-filters";
+import { LoadMoreButton } from "@/components/public/load-more-button";
 import { ProductCard } from "@/components/public/product-card";
-import { publicListProducts } from "@/features/products/public-list-products";
+import {
+  publicListProductBrands,
+  publicListProductsPage,
+} from "@/features/products/public-list-products";
+import { parsePublicProductFilters } from "@/validators/products/public-filters";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProductsPage() {
-  const products = await publicListProducts();
+type ProductsPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function ProductsPage({ searchParams }: ProductsPageProps) {
+  const currentSearchParams = (await searchParams) ?? {};
+  const filters = parsePublicProductFilters(currentSearchParams);
+  const [productPage, brands] = await Promise.all([
+    publicListProductsPage(filters),
+    publicListProductBrands(),
+  ]);
+  const { hasMore, nextPage, products } = productPage;
 
   return (
     <main className="bg-agromassa-cream">
@@ -24,7 +40,17 @@ export default async function ProductsPage() {
       </section>
 
       <section className="px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
+        <div className="mx-auto grid max-w-7xl gap-6">
+          <CatalogFilters brands={brands} filters={filters} />
+
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-sm font-bold text-agromassa-muted">
+              {products.length === 1
+                ? "1 produto encontrado"
+                : `${products.length} produtos encontrados`}
+            </p>
+          </div>
+
           {products.length > 0 ? (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {products.map((product) => (
@@ -37,14 +63,21 @@ export default async function ProductsPage() {
                 Nenhum produto visivel
               </p>
               <h2 className="mt-3 text-2xl font-black text-agromassa-ink">
-                O catalogo ainda nao tem produtos publicados.
+                Nenhum produto encontrado.
               </h2>
               <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-agromassa-muted">
-                Assim que novos tratores e implementos forem liberados pela
-                AgroMassa, eles aparecerao aqui.
+                Ajuste os filtros ou limpe a busca para voltar ao catalogo
+                completo da AgroMassa.
               </p>
             </div>
           )}
+
+          {hasMore && nextPage ? (
+            <LoadMoreButton
+              nextPage={nextPage}
+              searchParams={currentSearchParams}
+            />
+          ) : null}
         </div>
       </section>
     </main>
