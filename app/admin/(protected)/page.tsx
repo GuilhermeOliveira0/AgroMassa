@@ -1,0 +1,90 @@
+import Link from "next/link";
+
+const dashboardCards = [
+  {
+    label: "Produtos",
+    value: "Catalogo",
+    description: "Gerencie tratores e implementos nas proximas etapas.",
+  },
+  {
+    label: "Institucional",
+    value: "AgroMassa",
+    description: "Mantenha contatos e apresentacao alinhados ao site publico.",
+  },
+  {
+    label: "Site publico",
+    value: "Online",
+    description: "Home, catalogo, detalhes e CTAs de WhatsApp ativos.",
+  },
+];
+
+export default function AdminDashboardPage() {
+  return (
+    <main className="px-4 py-6 sm:px-6 lg:px-8">
+      <section className="rounded-lg border border-agromassa-border bg-white p-5 sm:p-6">
+        <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div>
+            <p className="text-sm font-black uppercase text-agromassa-green">
+              Dashboard
+            </p>
+            <h2 className="mt-2 text-3xl font-black text-agromassa-ink">
+              Base administrativa pronta.
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-agromassa-muted">
+              Use este painel para acompanhar os modulos do MVP. As proximas
+              etapas conectam listagem, cadastro de produtos, uploads e dados
+              institucionais.
+            </p>
+          </div>
+
+          <Link
+            className="inline-flex min-h-11 items-center justify-center rounded-md bg-agromassa-forest px-5 text-sm font-black text-white transition hover:bg-agromassa-ink"
+            href="/produtos"
+          >
+            Ver catalogo publico
+          </Link>
+        </div>
+      </section>
+
+      <section className="mt-6 grid gap-4 md:grid-cols-3">
+        {dashboardCards.map((card) => (
+          <article
+            className="rounded-lg border border-agromassa-border bg-white p-5"
+            key={card.label}
+          >
+            <p className="text-xs font-black uppercase text-agromassa-muted">
+              {card.label}
+            </p>
+            <h3 className="mt-2 text-2xl font-black text-agromassa-forest">
+              {card.value}
+            </h3>
+            <p className="mt-3 text-sm leading-6 text-agromassa-muted">
+              {card.description}
+            </p>
+          </article>
+        ))}
+      </section>
+
+      <section className="mt-6 rounded-lg border border-agromassa-border bg-white p-5 sm:p-6">
+        <h2 className="text-xl font-black text-agromassa-ink">
+          Modulos administrativos
+        </h2>
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          <div className="rounded-lg border border-agromassa-border p-4">
+            <p className="font-black text-agromassa-ink">Produtos</p>
+            <p className="mt-2 text-sm leading-6 text-agromassa-muted">
+              Listagem, criacao e edicao entram nas proximas tasks do roadmap.
+            </p>
+          </div>
+          <div className="rounded-lg border border-agromassa-border p-4">
+            <p className="font-black text-agromassa-ink">Institucional</p>
+            <p className="mt-2 text-sm leading-6 text-agromassa-muted">
+              Edicao de contatos, servicos e texto institucional sera conectada
+              em task propria.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}

@@ -413,6 +413,8 @@
 
 ### T20 - Criar shell administrativo e dashboard inicial
 
+**Status**: Concluida
+
 **Objetivo**: montar a base visual da area administrativa autenticada.
 **Arquivos provaveis envolvidos**: `app/admin/layout.tsx`, `app/admin/page.tsx`, `src/components/admin/admin-sidebar.tsx`, `src/components/admin/admin-header.tsx`
 **Passos de implementacao**:
