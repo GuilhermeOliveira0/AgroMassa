@@ -432,6 +432,8 @@
 
 ### T21 - Criar listagem administrativa de produtos
 
+**Status**: Concluida
+
 **Objetivo**: permitir ao administrador localizar e abrir produtos para manutencao.
 **Arquivos provaveis envolvidos**: `app/admin/produtos/page.tsx`, `src/features/products/admin-list-products.ts`, `src/components/admin/products-table.tsx`
 **Passos de implementacao**:

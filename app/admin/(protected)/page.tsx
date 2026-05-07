@@ -3,8 +3,8 @@ import Link from "next/link";
 const dashboardCards = [
   {
     label: "Produtos",
-    value: "Catalogo",
-    description: "Gerencie tratores e implementos nas proximas etapas.",
+    value: "Listagem",
+    description: "Localize tratores e implementos cadastrados no banco.",
   },
   {
     label: "Institucional",
@@ -73,8 +73,15 @@ export default function AdminDashboardPage() {
           <div className="rounded-lg border border-agromassa-border p-4">
             <p className="font-black text-agromassa-ink">Produtos</p>
             <p className="mt-2 text-sm leading-6 text-agromassa-muted">
-              Listagem, criacao e edicao entram nas proximas tasks do roadmap.
+              Listagem administrativa disponivel. Criacao e edicao entram nas
+              proximas tasks do roadmap.
             </p>
+            <Link
+              className="mt-4 inline-flex min-h-10 items-center justify-center rounded-md border border-agromassa-border px-4 text-sm font-black text-agromassa-forest transition hover:border-agromassa-forest"
+              href="/admin/produtos"
+            >
+              Abrir produtos
+            </Link>
           </div>
           <div className="rounded-lg border border-agromassa-border p-4">
             <p className="font-black text-agromassa-ink">Institucional</p>

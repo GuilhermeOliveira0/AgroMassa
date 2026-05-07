@@ -12,7 +12,7 @@ const navigationItems = [
     href: "/admin/produtos",
     label: "Produtos",
     description: "Cadastro e catalogo",
-    isAvailable: false,
+    isAvailable: true,
   },
   {
     href: "/admin/institucional",
@@ -42,7 +42,10 @@ export function AdminSidebar() {
         </div>
       </div>
 
-      <nav aria-label="Navegacao administrativa" className="grid gap-2 px-4 pb-4 sm:px-6 lg:px-4">
+      <nav
+        aria-label="Navegacao administrativa"
+        className="grid gap-2 px-4 pb-4 sm:px-6 lg:px-4"
+      >
         {navigationItems.map((item) =>
           item.isAvailable ? (
             <Link
