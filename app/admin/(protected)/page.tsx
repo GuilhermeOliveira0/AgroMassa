@@ -89,9 +89,15 @@ export default async function AdminDashboardPage() {
           <div className="rounded-lg border border-agromassa-border p-4">
             <p className="font-black text-agromassa-ink">Institucional</p>
             <p className="mt-2 text-sm leading-6 text-agromassa-muted">
-              Edicao de contatos, servicos e texto institucional sera conectada
-              em task propria.
+              Edite contatos, servicos e texto institucional em uma tela
+              dedicada.
             </p>
+            <Link
+              className="mt-4 inline-flex min-h-10 items-center justify-center rounded-md border border-agromassa-border px-4 text-sm font-black text-agromassa-forest transition hover:border-agromassa-forest"
+              href="/admin/institucional"
+            >
+              Abrir institucional
+            </Link>
           </div>
         </div>
       </section>

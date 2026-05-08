@@ -575,6 +575,8 @@
 
 ### T28 - Criar tela administrativa de configuracoes institucionais
 
+**Status**: Concluida
+
 **Objetivo**: permitir editar nome, texto, servicos, telefone, WhatsApp e localizacao da empresa.
 **Arquivos provaveis envolvidos**: `app/admin/institucional/page.tsx`, `src/components/admin/institutional-form.tsx`, `src/validators/institutional/site-settings.ts`
 **Passos de implementacao**:

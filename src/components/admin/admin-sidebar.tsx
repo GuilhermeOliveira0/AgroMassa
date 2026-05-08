@@ -18,7 +18,7 @@ const navigationItems = [
     href: "/admin/institucional",
     label: "Institucional",
     description: "Dados da empresa",
-    isAvailable: false,
+    isAvailable: true,
   },
 ];
 
