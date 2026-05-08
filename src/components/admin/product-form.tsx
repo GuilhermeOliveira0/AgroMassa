@@ -19,11 +19,18 @@ import {
   adminProductFormSchema,
 } from "@/validators/products/admin-product";
 
+import {
+  ProductImageGallery,
+  type ProductFormImage,
+} from "./product-image-gallery";
+import { ProductImageUploader } from "./product-image-uploader";
+
 export type ProductFormInitialValues = Omit<
   AdminProductFormInput,
   "intent"
 > & {
   id?: string;
+  images: ProductFormImage[];
   mainImageUrl?: string | null;
 };
 
@@ -50,31 +57,6 @@ const statusLabels: Record<string, string> = {
   SOB_CONSULTA: "Sob consulta",
   VENDIDO: "Vendido",
 };
-
-export function createEmptyProductFormValues(): ProductFormInitialValues {
-  return {
-    brand: "",
-    category: "",
-    city: "Sao Francisco",
-    condition: "",
-    description: "",
-    isArchived: false,
-    isFeatured: false,
-    isPublicVisible: false,
-    mainImageId: "",
-    mainImageUrl: null,
-    model: "",
-    name: "",
-    price: "",
-    priceVisible: true,
-    slug: "",
-    state: "SP",
-    status: "RASCUNHO",
-    subcategory: "",
-    technicalSpecs: "",
-    year: "",
-  };
-}
 
 function FieldError({ message }: { message?: string }) {
   if (!message) {
@@ -216,6 +198,29 @@ export function ProductForm({ initialValues, mode }: ProductFormProps) {
   const [isPending, startTransition] = useTransition();
   const [errors, setErrors] = useState<AdminProductFormFieldErrors>({});
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [images, setImages] = useState<ProductFormImage[]>(initialValues.images);
+  const [mainImageId, setMainImageId] = useState(initialValues.mainImageId);
+
+  function handleImageUploaded(image: ProductFormImage) {
+    setImages((currentImages) => [image, ...currentImages]);
+
+    if (image.isMain || !mainImageId) {
+      setMainImageId(image.id);
+    }
+
+    router.refresh();
+  }
+
+  function handleMainImageChange(imageId: string) {
+    setMainImageId(imageId);
+    setImages((currentImages) =>
+      currentImages.map((image) => ({
+        ...image,
+        isMain: image.id === imageId,
+      })),
+    );
+    router.refresh();
+  }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -474,30 +479,28 @@ export function ProductForm({ initialValues, mode }: ProductFormProps) {
       <section className="rounded-lg border border-agromassa-border bg-white p-5 sm:p-6">
         <h2 className="text-xl font-black text-agromassa-ink">Fotos</h2>
         <input
-          defaultValue={initialValues.mainImageId}
+          readOnly
+          value={mainImageId}
           name="mainImageId"
           type="hidden"
         />
-        <div className="mt-5 rounded-lg border border-dashed border-agromassa-border bg-agromassa-cream p-5">
-          {initialValues.mainImageUrl ? (
-            <div className="grid gap-3 sm:grid-cols-[160px_1fr] sm:items-center">
-              <div
-                aria-label={initialValues.name}
-                className="aspect-[4/3] rounded-md bg-agromassa-ink bg-cover bg-center"
-                role="img"
-                style={{
-                  backgroundImage: `url("${initialValues.mainImageUrl.replaceAll('"', '\\"')}"), url("/brand/agromassa.jpeg")`,
-                }}
-              />
-              <p className="text-sm font-bold leading-6 text-agromassa-muted">
-                Foto principal vinculada ao produto.
-              </p>
-            </div>
-          ) : (
-            <p className="text-sm font-bold leading-6 text-agromassa-muted">
-              Nenhuma foto principal vinculada.
-            </p>
-          )}
+        <div className="mt-5 grid gap-5">
+          <ProductImageUploader
+            disabled={isPending}
+            imageCount={images.length}
+            onImageUploaded={handleImageUploaded}
+            productId={initialValues.id}
+          />
+
+          {initialValues.id ? (
+            <ProductImageGallery
+              images={images}
+              mainImageId={mainImageId}
+              onMainImageChange={handleMainImageChange}
+              productId={initialValues.id}
+            />
+          ) : null}
+
           <FieldError message={errors.mainImageId} />
         </div>
       </section>

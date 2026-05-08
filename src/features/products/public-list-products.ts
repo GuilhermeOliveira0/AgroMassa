@@ -2,6 +2,7 @@ import { ProductStatus, type Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
 import { normalizeSearchText } from "@/lib/search/normalize";
+import { getProductImageDisplayUrl } from "@/lib/storage/supabase-storage";
 import type { PublicProductFilterParams } from "@/validators/products/public-filters";
 
 export const PUBLIC_PRODUCTS_PAGE_SIZE = 9;
@@ -92,13 +93,14 @@ const publicProductListSelect = {
   isFeatured: true,
   publishedAt: true,
   createdAt: true,
-  mainImage: {
-    select: {
-      id: true,
-      publicUrl: true,
-      originalFilename: true,
-      width: true,
-      height: true,
+    mainImage: {
+      select: {
+        id: true,
+        publicUrl: true,
+        storageKey: true,
+        originalFilename: true,
+        width: true,
+        height: true,
     },
   },
 } satisfies Prisma.ProductSelect;
@@ -133,9 +135,14 @@ function isCompletePublicProduct(
   );
 }
 
-function toPublicProductListItem(
+async function toPublicProductListItem(
   product: CompletePublicProductQueryResult,
-): PublicProductListItem {
+): Promise<PublicProductListItem> {
+  const mainImageUrl = await getProductImageDisplayUrl({
+    publicUrl: product.mainImage.publicUrl,
+    storageKey: product.mainImage.storageKey,
+  });
+
   return {
     id: product.id,
     slug: product.slug,
@@ -156,7 +163,7 @@ function toPublicProductListItem(
     createdAt: product.createdAt,
     mainImage: {
       id: product.mainImage.id,
-      publicUrl: product.mainImage.publicUrl,
+      publicUrl: mainImageUrl,
       altText: product.name,
       width: product.mainImage.width,
       height: product.mainImage.height,
@@ -216,9 +223,9 @@ export async function publicListProducts(
     select: publicProductListSelect,
   });
 
-  return products
-    .filter(isCompletePublicProduct)
-    .map(toPublicProductListItem);
+  return Promise.all(
+    products.filter(isCompletePublicProduct).map(toPublicProductListItem),
+  );
 }
 
 export type PublicProductListPage = {
@@ -252,10 +259,12 @@ export async function publicListProductsPage(
     where: buildPublicProductWhere(filters),
   });
 
-  const visibleProducts = products
-    .slice(0, visibleLimit)
-    .filter(isCompletePublicProduct)
-    .map(toPublicProductListItem);
+  const visibleProducts = await Promise.all(
+    products
+      .slice(0, visibleLimit)
+      .filter(isCompletePublicProduct)
+      .map(toPublicProductListItem),
+  );
 
   return {
     hasMore: products.length > visibleLimit,

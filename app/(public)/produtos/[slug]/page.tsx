@@ -48,7 +48,12 @@ export default async function ProductDetailPage({
 
       <section className="px-4 py-10 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:items-start">
-          <ProductGallery product={product} />
+          <ProductGallery
+            images={product.images}
+            isFeatured={product.isFeatured}
+            mainImage={product.mainImage}
+            productName={product.name}
+          />
           <ProductDetail
             product={product}
             whatsappPhone={settings.whatsappDigits}

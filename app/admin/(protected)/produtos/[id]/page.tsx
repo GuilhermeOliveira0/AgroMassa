@@ -42,6 +42,7 @@ function productToInitialValues(
     isArchived: product.isArchived,
     isFeatured: product.isFeatured,
     isPublicVisible: product.isPublicVisible,
+    images: product.images,
     mainImageId: product.mainImageId ?? "",
     mainImageUrl: product.mainImage?.publicUrl ?? null,
     model: product.model ?? "",

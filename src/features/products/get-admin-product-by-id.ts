@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
+import { getProductImageDisplayUrl } from "@/lib/storage/supabase-storage";
 
 const adminProductDetailSelect = {
   brand: true,
@@ -16,9 +17,35 @@ const adminProductDetailSelect = {
     select: {
       id: true,
       publicUrl: true,
+      storageKey: true,
     },
   },
   mainImageId: true,
+  images: {
+    orderBy: [
+      {
+        isMain: "desc",
+      },
+      {
+        sortOrder: "asc",
+      },
+      {
+        createdAt: "asc",
+      },
+    ],
+    select: {
+      fileSizeBytes: true,
+      height: true,
+      id: true,
+      isMain: true,
+      mimeType: true,
+      originalFilename: true,
+      publicUrl: true,
+      sortOrder: true,
+      storageKey: true,
+      width: true,
+    },
+  },
   model: true,
   name: true,
   priceCents: true,
@@ -38,10 +65,38 @@ export type AdminProductDetail = Prisma.ProductGetPayload<{
 export async function getAdminProductById(
   id: string,
 ): Promise<AdminProductDetail | null> {
-  return prisma.product.findUnique({
+  const product = await prisma.product.findUnique({
     select: adminProductDetailSelect,
     where: {
       id,
     },
   });
+
+  if (!product) {
+    return null;
+  }
+
+  const images = await Promise.all(
+    product.images.map(async (image) => ({
+      ...image,
+      publicUrl: await getProductImageDisplayUrl({
+        publicUrl: image.publicUrl,
+        storageKey: image.storageKey,
+      }),
+    })),
+  );
+
+  return {
+    ...product,
+    images,
+    mainImage: product.mainImage
+      ? {
+          ...product.mainImage,
+          publicUrl: await getProductImageDisplayUrl({
+            publicUrl: product.mainImage.publicUrl,
+            storageKey: product.mainImage.storageKey,
+          }),
+        }
+      : null,
+  };
 }

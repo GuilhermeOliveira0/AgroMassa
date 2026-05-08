@@ -118,3 +118,27 @@ export async function uploadProductImage({
     storageKey,
   };
 }
+
+export async function getProductImageDisplayUrl({
+  publicUrl,
+  storageKey,
+}: {
+  publicUrl: string;
+  storageKey: string;
+}) {
+  try {
+    const { bucket } = getSupabaseStorageConfig();
+    const supabase = createSupabaseStorageClient();
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .createSignedUrl(storageKey, 60 * 60 * 24);
+
+    if (!error && data.signedUrl) {
+      return data.signedUrl;
+    }
+  } catch {
+    return publicUrl;
+  }
+
+  return publicUrl;
+}

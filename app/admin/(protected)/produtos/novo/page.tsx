@@ -1,7 +1,5 @@
-import {
-  createEmptyProductFormValues,
-  ProductForm,
-} from "@/components/admin/product-form";
+import { ProductForm } from "@/components/admin/product-form";
+import { createEmptyProductFormValues } from "@/features/products/product-form-defaults";
 
 export default function NewProductPage() {
   return (

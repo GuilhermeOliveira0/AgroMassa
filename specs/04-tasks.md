@@ -533,6 +533,8 @@
 
 ### T26 - Adicionar UI de upload e galeria no formulario administrativo
 
+**Status**: Concluida
+
 **Objetivo**: permitir que o administrador envie, visualize e organize ate 8 fotos por produto.
 **Arquivos provaveis envolvidos**: `src/components/admin/product-image-uploader.tsx`, `src/components/admin/product-image-gallery.tsx`, `src/components/admin/product-form.tsx`
 **Passos de implementacao**:

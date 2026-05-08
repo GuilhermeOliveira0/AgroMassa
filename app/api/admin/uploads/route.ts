@@ -6,6 +6,7 @@ import {
 } from "@/features/products/attach-product-image";
 import { getServerAuthSession } from "@/lib/auth/auth";
 import {
+  getProductImageDisplayUrl,
   PRODUCT_IMAGE_MIME_TYPES,
   uploadProductImage,
   validateProductImageFile,
@@ -94,9 +95,16 @@ export async function POST(request: Request) {
       productId,
       width: null,
     });
+    const displayUrl = await getProductImageDisplayUrl({
+      publicUrl: image.publicUrl,
+      storageKey: image.storageKey,
+    });
 
     return NextResponse.json({
-      image,
+      image: {
+        ...image,
+        publicUrl: displayUrl,
+      },
     });
   } catch (error) {
     const message =

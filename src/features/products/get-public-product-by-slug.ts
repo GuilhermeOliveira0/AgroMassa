@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
+import { getProductImageDisplayUrl } from "@/lib/storage/supabase-storage";
 
 import { publicProductVisibilityWhere } from "./public-list-products";
 
@@ -28,6 +29,7 @@ const publicProductDetailSelect = {
     select: {
       id: true,
       publicUrl: true,
+      storageKey: true,
       originalFilename: true,
       width: true,
       height: true,
@@ -51,6 +53,7 @@ const publicProductDetailSelect = {
     select: {
       id: true,
       publicUrl: true,
+      storageKey: true,
       originalFilename: true,
       width: true,
       height: true,
@@ -130,24 +133,32 @@ function isCompletePublicProductDetail(
   );
 }
 
-function toPublicProductDetail(
+async function toPublicProductDetail(
   product: CompletePublicProductDetailQueryResult,
-): PublicProductDetail {
-  const images = product.images.map((image) => ({
-    id: image.id,
-    publicUrl: image.publicUrl,
-    altText: product.name,
-    width: image.width,
-    height: image.height,
-    isMain: image.isMain,
-    sortOrder: image.sortOrder,
-  }));
+): Promise<PublicProductDetail> {
+  const images = await Promise.all(
+    product.images.map(async (image) => ({
+      id: image.id,
+      publicUrl: await getProductImageDisplayUrl({
+        publicUrl: image.publicUrl,
+        storageKey: image.storageKey,
+      }),
+      altText: product.name,
+      width: image.width,
+      height: image.height,
+      isMain: image.isMain,
+      sortOrder: image.sortOrder,
+    })),
+  );
 
   const mainImage =
     images.find((image) => image.id === product.mainImage.id) ??
     ({
       id: product.mainImage.id,
-      publicUrl: product.mainImage.publicUrl,
+      publicUrl: await getProductImageDisplayUrl({
+        publicUrl: product.mainImage.publicUrl,
+        storageKey: product.mainImage.storageKey,
+      }),
       altText: product.name,
       width: product.mainImage.width,
       height: product.mainImage.height,
