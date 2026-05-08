@@ -11,7 +11,7 @@ export default async function PublicLayout({
 
   return (
     <div className="flex min-h-screen flex-col bg-agromassa-cream text-agromassa-ink">
-      <SiteHeader />
+      <SiteHeader settings={settings} />
       <div className="flex-1">{children}</div>
       <SiteFooter settings={settings} />
     </div>

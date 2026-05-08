@@ -5,16 +5,21 @@ import {
   buildInstitutionalWhatsAppMessage,
   buildWhatsAppUrl,
 } from "@/lib/utils/whatsapp";
+import type { PublicSiteSettings } from "@/types/site-settings";
 
 const navigationItems = [
   { href: "/", label: "Inicio" },
   { href: "/produtos", label: "Produtos" },
 ];
 
-export function SiteHeader() {
+type SiteHeaderProps = {
+  settings: PublicSiteSettings;
+};
+
+export function SiteHeader({ settings }: SiteHeaderProps) {
   const whatsappUrl = buildWhatsAppUrl({
     message: buildInstitutionalWhatsAppMessage(),
-    phone: "5517997278876",
+    phone: settings.whatsappDigits,
   });
 
   return (
@@ -25,16 +30,16 @@ export function SiteHeader() {
           href="/"
         >
           <Image
-            alt="AgroMassa"
+            alt={`Logo ${settings.companyName}`}
             className="h-12 w-12 rounded-md border border-black/10 object-cover"
             height={48}
             priority
-            src="/brand/agromassa.jpeg"
+            src={settings.logoPath}
             width={48}
           />
           <span className="min-w-0">
             <span className="block text-lg font-black leading-none">
-              AgroMassa
+              {settings.companyName}
             </span>
             <span className="mt-1 hidden text-xs font-semibold uppercase text-agromassa-muted sm:block">
               Tratores e implementos agricolas

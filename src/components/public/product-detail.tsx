@@ -65,7 +65,6 @@ export function ProductDetail({ product, whatsappPhone }: ProductDetailProps) {
   const whatsappUrl = buildWhatsAppUrl({
     message: buildProductWhatsAppMessage({
       productName: product.name,
-      productPath: `/produtos/${product.slug}`,
     }),
     phone: whatsappPhone,
   });

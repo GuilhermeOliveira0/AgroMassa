@@ -643,6 +643,8 @@
 
 ### T31 - Validar fluxo ponta a ponta do catalogo publico
 
+**Status**: Concluida
+
 **Objetivo**: verificar que a experiencia publica completa atende a spec.
 **Arquivos provaveis envolvidos**: ajustes eventuais em `app/(public)/*`, `src/components/public/*`, `src/features/products/*`
 **Passos de implementacao**:
