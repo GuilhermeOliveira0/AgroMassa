@@ -2,7 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 
-import { getServerAuthSession } from "@/lib/auth/auth";
+import {
+  ADMIN_SESSION_ERROR_MESSAGE,
+  getActiveAdminId,
+} from "@/lib/auth/admin-session";
 import {
   siteSettingsFormFieldErrors,
   siteSettingsFormInputFromFormData,
@@ -18,16 +21,6 @@ export type SiteSettingsFormActionResult = {
   ok: boolean;
 };
 
-async function getActiveAdminId() {
-  const session = await getServerAuthSession();
-
-  if (!session?.user?.id || !session.user.isActive) {
-    return null;
-  }
-
-  return session.user.id;
-}
-
 export async function saveSiteSettingsAction(
   formData: FormData,
 ): Promise<SiteSettingsFormActionResult> {
@@ -35,7 +28,7 @@ export async function saveSiteSettingsAction(
 
   if (!adminId) {
     return {
-      formError: "Sessao administrativa invalida. Faca login novamente.",
+      formError: ADMIN_SESSION_ERROR_MESSAGE,
       ok: false,
     };
   }
@@ -52,10 +45,19 @@ export async function saveSiteSettingsAction(
     };
   }
 
-  const result = await saveSiteSettings({
-    adminId,
-    input: parsedInput.data,
-  });
+  let result: Awaited<ReturnType<typeof saveSiteSettings>>;
+
+  try {
+    result = await saveSiteSettings({
+      adminId,
+      input: parsedInput.data,
+    });
+  } catch {
+    return {
+      formError: "Nao foi possivel salvar as configuracoes agora.",
+      ok: false,
+    };
+  }
 
   if (!result.ok) {
     return {

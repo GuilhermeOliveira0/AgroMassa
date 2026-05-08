@@ -2,10 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 
-import { getServerAuthSession } from "@/lib/auth/auth";
 import { archiveProduct } from "@/features/products/archive-product";
 import { saveProduct } from "@/features/products/save-product";
 import { setMainProductImage } from "@/features/products/set-main-image";
+import {
+  ADMIN_SESSION_ERROR_MESSAGE,
+  getActiveAdminId,
+} from "@/lib/auth/admin-session";
 import {
   adminProductFormFieldErrors,
   adminProductFormInputFromFormData,
@@ -21,16 +24,6 @@ export type ProductFormActionResult = {
   redirectTo?: string;
 };
 
-async function getActiveAdminId() {
-  const session = await getServerAuthSession();
-
-  if (!session?.user?.id || !session.user.isActive) {
-    return null;
-  }
-
-  return session.user.id;
-}
-
 export async function saveProductAction({
   formData,
   intent,
@@ -44,7 +37,7 @@ export async function saveProductAction({
 
   if (!adminId) {
     return {
-      formError: "Sessao administrativa invalida. Faca login novamente.",
+      formError: ADMIN_SESSION_ERROR_MESSAGE,
       ok: false,
     };
   }
@@ -60,11 +53,20 @@ export async function saveProductAction({
     };
   }
 
-  const result = await saveProduct({
-    adminId,
-    input: parsedInput.data,
-    productId,
-  });
+  let result: Awaited<ReturnType<typeof saveProduct>>;
+
+  try {
+    result = await saveProduct({
+      adminId,
+      input: parsedInput.data,
+      productId,
+    });
+  } catch {
+    return {
+      formError: "Nao foi possivel salvar o produto agora.",
+      ok: false,
+    };
+  }
 
   if (!result.ok) {
     return {
@@ -91,15 +93,22 @@ export async function archiveProductAction(
 
   if (!adminId) {
     return {
-      formError: "Sessao administrativa invalida. Faca login novamente.",
+      formError: ADMIN_SESSION_ERROR_MESSAGE,
       ok: false,
     };
   }
 
-  await archiveProduct({
-    adminId,
-    productId,
-  });
+  try {
+    await archiveProduct({
+      adminId,
+      productId,
+    });
+  } catch {
+    return {
+      formError: "Nao foi possivel arquivar o produto agora.",
+      ok: false,
+    };
+  }
 
   revalidatePath("/admin/produtos");
   revalidatePath(`/admin/produtos/${productId}`);
@@ -122,7 +131,7 @@ export async function setMainProductImageAction({
 
   if (!adminId) {
     return {
-      formError: "Sessao administrativa invalida. Faca login novamente.",
+      formError: ADMIN_SESSION_ERROR_MESSAGE,
       ok: false,
     };
   }

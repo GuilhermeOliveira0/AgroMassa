@@ -10,6 +10,11 @@ const loginSchema = z.object({
   email: z.string().trim().email(),
   password: z.string().min(1),
 });
+
+function recordInvalidAdminLoginAttempt(reason: string) {
+  console.warn(`Invalid admin login attempt: ${reason}`);
+}
+
 async function getAdminForAuth(email: string) {
   return prisma.adminUser.findUnique({
     where: {
@@ -47,19 +52,27 @@ export const authOptions: NextAuthOptions = {
         const parsedCredentials = loginSchema.safeParse(credentials);
 
         if (!parsedCredentials.success) {
+          recordInvalidAdminLoginAttempt("invalid_credentials_shape");
           return null;
         }
 
         const { email, password } = parsedCredentials.data;
         const admin = await getAdminForAuth(email);
 
-        if (!admin || !admin.isActive) {
+        if (!admin) {
+          recordInvalidAdminLoginAttempt("unknown_admin");
+          return null;
+        }
+
+        if (!admin.isActive) {
+          recordInvalidAdminLoginAttempt("inactive_admin");
           return null;
         }
 
         const passwordMatches = await bcrypt.compare(password, admin.passwordHash);
 
         if (!passwordMatches) {
+          recordInvalidAdminLoginAttempt("invalid_password");
           return null;
         }
 

@@ -5,7 +5,12 @@ import {
   ProductImageAttachmentValidationError,
   validateProductImageAttachmentTarget,
 } from "@/features/products/attach-product-image";
-import { getServerAuthSession } from "@/lib/auth/auth";
+import { getActiveAdminId } from "@/lib/auth/admin-session";
+import {
+  adminBadRequestResponse,
+  adminServerErrorResponse,
+  adminUnauthorizedResponse,
+} from "@/lib/http/admin-api-responses";
 import {
   getProductImageDisplayUrl,
   uploadProductImage,
@@ -29,58 +34,46 @@ function parseMainFlag(value: FormDataEntryValue | null) {
   return value !== "false";
 }
 
-export async function POST(request: Request) {
-  const session = await getServerAuthSession();
+function isMultipartRequest(request: Request) {
+  return request.headers.get("content-type")?.includes("multipart/form-data");
+}
 
-  if (!session?.user?.id || !session.user.isActive) {
-    return NextResponse.json(
-      {
-        error: "Acesso administrativo necessario.",
-      },
-      {
-        status: 401,
-      },
-    );
+export async function POST(request: Request) {
+  const adminId = await getActiveAdminId();
+
+  if (!adminId) {
+    return adminUnauthorizedResponse();
   }
 
-  const formData = await request.formData();
+  if (!isMultipartRequest(request)) {
+    return adminBadRequestResponse("Envie uma requisicao multipart/form-data.");
+  }
+
+  let formData: FormData;
+
+  try {
+    formData = await request.formData();
+  } catch {
+    return adminBadRequestResponse("Nao foi possivel ler os dados do upload.");
+  }
+
   const file = formData.get("file");
   const productId = firstFormValue(formData.get("productId"));
 
   if (!(file instanceof File)) {
-    return NextResponse.json(
-      {
-        error: "Envie uma imagem no campo file.",
-      },
-      {
-        status: 400,
-      },
-    );
+    return adminBadRequestResponse("Envie uma imagem no campo file.");
   }
 
   if (!productId) {
-    return NextResponse.json(
-      {
-        error: "Informe o produto para vincular a imagem.",
-      },
-      {
-        status: 400,
-      },
-    );
+    return adminBadRequestResponse("Informe o produto para vincular a imagem.");
   }
 
   const validationError = validateProductImageFile(file);
 
   if (validationError) {
-    return NextResponse.json(
-      {
-        error: validationError,
-        supportedTypes: PRODUCT_IMAGE_MIME_TYPES,
-      },
-      {
-        status: 400,
-      },
-    );
+    return adminBadRequestResponse(validationError, {
+      supportedTypes: PRODUCT_IMAGE_MIME_TYPES,
+    });
   }
 
   try {
@@ -92,7 +85,7 @@ export async function POST(request: Request) {
     });
     const image = await attachProductImage({
       ...uploadedImage,
-      adminId: session.user.id,
+      adminId,
       height: null,
       isMain: parseMainFlag(formData.get("isMain")),
       productId,
@@ -110,20 +103,10 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Nao foi possivel enviar a imagem.";
-    const status =
-      error instanceof ProductImageAttachmentValidationError ? 400 : 500;
+    if (error instanceof ProductImageAttachmentValidationError) {
+      return adminBadRequestResponse(error.message);
+    }
 
-    return NextResponse.json(
-      {
-        error: message,
-      },
-      {
-        status,
-      },
-    );
+    return adminServerErrorResponse();
   }
 }

@@ -618,6 +618,8 @@
 
 ### T30 - Aplicar endurecimento basico de seguranca e tratamento de erros
 
+**Status**: Concluida
+
 **Objetivo**: adicionar protecoes minimas em auth, admin e upload.
 **Arquivos provaveis envolvidos**: `middleware.ts` ou `proxy.ts`, `src/lib/auth/auth.ts`, `app/api/admin/uploads/route.ts`, `app/api/admin/produtos/*.ts`, utilitarios de erro
 **Passos de implementacao**:
