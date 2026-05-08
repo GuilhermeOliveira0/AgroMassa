@@ -7,8 +7,9 @@ export default async function AdminDashboardPage() {
   const dashboardCards = [
     {
       label: "Produtos",
-      value: "Listagem",
-      description: "Localize tratores e implementos cadastrados no banco.",
+      value: "Ativo",
+      description:
+        "Cadastro, edicao, imagens, publicacao e arquivamento disponiveis.",
     },
     {
       label: "Institucional",
@@ -34,9 +35,8 @@ export default async function AdminDashboardPage() {
               Base administrativa da {settings.companyName}.
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-agromassa-muted">
-              Use este painel para acompanhar os modulos do MVP. As proximas
-              etapas conectam listagem, cadastro de produtos, uploads e dados
-              institucionais.
+              Use este painel para manter produtos, imagens e dados
+              institucionais alinhados com o site publico.
             </p>
           </div>
 
@@ -76,15 +76,23 @@ export default async function AdminDashboardPage() {
           <div className="rounded-lg border border-agromassa-border p-4">
             <p className="font-black text-agromassa-ink">Produtos</p>
             <p className="mt-2 text-sm leading-6 text-agromassa-muted">
-              Listagem administrativa disponivel. Criacao e edicao entram nas
-              proximas tasks do roadmap.
+              Cadastre, edite, publique, envie imagens e arquive produtos sem
+              apagar o historico do catalogo.
             </p>
-            <Link
-              className="mt-4 inline-flex min-h-10 items-center justify-center rounded-md border border-agromassa-border px-4 text-sm font-black text-agromassa-forest transition hover:border-agromassa-forest"
-              href="/admin/produtos"
-            >
-              Abrir produtos
-            </Link>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link
+                className="inline-flex min-h-10 items-center justify-center rounded-md border border-agromassa-border px-4 text-sm font-black text-agromassa-forest transition hover:border-agromassa-forest"
+                href="/admin/produtos"
+              >
+                Abrir produtos
+              </Link>
+              <Link
+                className="inline-flex min-h-10 items-center justify-center rounded-md bg-agromassa-forest px-4 text-sm font-black text-white transition hover:bg-agromassa-ink"
+                href="/admin/produtos/novo"
+              >
+                Novo produto
+              </Link>
+            </div>
           </div>
           <div className="rounded-lg border border-agromassa-border p-4">
             <p className="font-black text-agromassa-ink">Institucional</p>

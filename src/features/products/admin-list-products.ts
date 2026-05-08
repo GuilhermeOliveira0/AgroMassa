@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
+import { getProductImageDisplayUrl } from "@/lib/storage/supabase-storage";
 
 export type AdminProductListFilters = {
   q?: string;
@@ -42,6 +43,7 @@ const adminProductListSelect = {
   mainImage: {
     select: {
       publicUrl: true,
+      storageKey: true,
     },
   },
 } satisfies Prisma.ProductSelect;
@@ -76,7 +78,7 @@ function buildAdminProductWhere(
 export async function adminListProducts(
   filters: AdminProductListFilters = {},
 ): Promise<AdminProductListItem[]> {
-  return prisma.product.findMany({
+  const products = await prisma.product.findMany({
     orderBy: [
       {
         updatedAt: "desc",
@@ -91,4 +93,18 @@ export async function adminListProducts(
     select: adminProductListSelect,
     where: buildAdminProductWhere(filters),
   });
+
+  return Promise.all(
+    products.map(async (product) => ({
+      ...product,
+      mainImage: product.mainImage
+        ? {
+            publicUrl: await getProductImageDisplayUrl({
+              publicUrl: product.mainImage.publicUrl,
+              storageKey: product.mainImage.storageKey,
+            }),
+          }
+        : null,
+    })),
+  );
 }

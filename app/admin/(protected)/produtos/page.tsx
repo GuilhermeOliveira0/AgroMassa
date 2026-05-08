@@ -109,9 +109,18 @@ export default async function AdminProductsPage({
               Nenhum produto encontrado.
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-agromassa-muted">
-              Cadastre um produto quando a etapa de formulario estiver
-              disponivel ou limpe a busca para revisar toda a base atual.
+              {q
+                ? "Limpe a busca para revisar toda a base atual."
+                : "Use o cadastro de produto para criar um rascunho, enviar imagens e publicar no catalogo."}
             </p>
+            {!q ? (
+              <Link
+                className="mt-5 inline-flex min-h-11 items-center justify-center rounded-md bg-agromassa-forest px-5 text-sm font-black text-white transition hover:bg-agromassa-ink"
+                href="/admin/produtos/novo"
+              >
+                Criar primeiro produto
+              </Link>
+            ) : null}
           </div>
         )}
       </section>

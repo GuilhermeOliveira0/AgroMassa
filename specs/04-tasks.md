@@ -663,6 +663,8 @@
 
 ### T32 - Validar fluxo administrativo ponta a ponta e preparar entrega do MVP
 
+**Status**: Concluida
+
 **Objetivo**: revisar o fluxo completo do admin e fechar pendencias de acabamento.
 **Arquivos provaveis envolvidos**: ajustes eventuais em `app/admin/*`, `src/components/admin/*`, `src/features/*`, `prisma/seed.ts`
 **Passos de implementacao**:
