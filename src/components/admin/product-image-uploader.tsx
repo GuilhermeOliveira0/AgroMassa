@@ -2,6 +2,11 @@
 
 import { type ChangeEvent, useState } from "react";
 
+import {
+  MAX_PRODUCT_IMAGES_PER_PRODUCT,
+  PRODUCT_IMAGE_MIME_TYPES,
+} from "@/validators/uploads/product-image";
+
 import type { ProductFormImage } from "./product-image-gallery";
 
 type UploadResponse =
@@ -31,7 +36,8 @@ export function ProductImageUploader({
 }: ProductImageUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
-  const canUpload = Boolean(productId) && imageCount < 8 && !disabled;
+  const canUpload =
+    Boolean(productId) && imageCount < MAX_PRODUCT_IMAGES_PER_PRODUCT && !disabled;
 
   async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -81,8 +87,8 @@ export function ProductImageUploader({
             Enviar imagem do produto
           </p>
           <p className="mt-2 text-sm font-bold leading-6 text-agromassa-muted">
-            Use JPG, PNG ou WEBP ate 5 MB. O limite do MVP e de 8 imagens por
-            produto.
+            Use JPG, PNG ou WEBP ate 5 MB. O limite do MVP e de{" "}
+            {MAX_PRODUCT_IMAGES_PER_PRODUCT} imagens por produto.
           </p>
         </div>
 
@@ -95,7 +101,7 @@ export function ProductImageUploader({
         >
           {isUploading ? "Enviando..." : "Selecionar arquivo"}
           <input
-            accept="image/jpeg,image/png,image/webp"
+            accept={PRODUCT_IMAGE_MIME_TYPES.join(",")}
             className="sr-only"
             disabled={!canUpload || isUploading}
             onChange={handleFileChange}
@@ -110,9 +116,9 @@ export function ProductImageUploader({
         </p>
       ) : null}
 
-      {imageCount >= 8 ? (
+      {imageCount >= MAX_PRODUCT_IMAGES_PER_PRODUCT ? (
         <p className="mt-4 rounded-md border border-agromassa-border bg-white px-3 py-2 text-sm font-bold text-agromassa-muted">
-          Limite de 8 imagens atingido.
+          Limite de {MAX_PRODUCT_IMAGES_PER_PRODUCT} imagens atingido.
         </p>
       ) : null}
 

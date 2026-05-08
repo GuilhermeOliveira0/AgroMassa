@@ -88,6 +88,10 @@ async function mainImageBelongsToProduct(
     return true;
   }
 
+  if (!productId) {
+    return false;
+  }
+
   const image = await prisma.productImage.findUnique({
     select: {
       productId: true,
@@ -101,7 +105,7 @@ async function mainImageBelongsToProduct(
     return false;
   }
 
-  return !productId || image.productId === productId;
+  return image.productId === productId;
 }
 
 function buildProductData(
@@ -210,7 +214,8 @@ export async function saveProduct({
   if (!(await mainImageBelongsToProduct(mainImageId, productId))) {
     return {
       fieldErrors: {
-        mainImageId: "A foto principal informada nao pertence a este produto.",
+        mainImageId:
+          "Salve o produto como rascunho e envie uma foto principal antes de publicar.",
       },
       formError: "Revise os campos destacados.",
       ok: false,

@@ -1,13 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
 
-const SUPPORTED_IMAGE_TYPES = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-} as const;
-
-export const MAX_PRODUCT_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
-export const PRODUCT_IMAGE_MIME_TYPES = Object.keys(SUPPORTED_IMAGE_TYPES);
+import {
+  productImageExtensionForMimeType,
+  validateProductImageFile,
+} from "@/validators/uploads/product-image";
 
 export type ProductImageUploadInput = {
   file: File;
@@ -48,10 +44,6 @@ function createSupabaseStorageClient() {
   });
 }
 
-function fileExtensionForMimeType(mimeType: string) {
-  return SUPPORTED_IMAGE_TYPES[mimeType as keyof typeof SUPPORTED_IMAGE_TYPES];
-}
-
 function safeOriginalFilename(filename: string) {
   const cleaned = filename
     .normalize("NFD")
@@ -67,22 +59,6 @@ function storagePrefix(productId?: string) {
   return productId ? `products/${productId}` : "products/unassigned";
 }
 
-export function validateProductImageFile(file: File): string | null {
-  if (file.size <= 0) {
-    return "Arquivo vazio nao pode ser enviado.";
-  }
-
-  if (file.size > MAX_PRODUCT_IMAGE_SIZE_BYTES) {
-    return "Imagem acima do limite de 5 MB.";
-  }
-
-  if (!fileExtensionForMimeType(file.type)) {
-    return "Formato invalido. Envie JPG, PNG ou WEBP.";
-  }
-
-  return null;
-}
-
 export async function uploadProductImage({
   file,
   productId,
@@ -95,7 +71,12 @@ export async function uploadProductImage({
 
   const { bucket } = getSupabaseStorageConfig();
   const supabase = createSupabaseStorageClient();
-  const extension = fileExtensionForMimeType(file.type);
+  const extension = productImageExtensionForMimeType(file.type);
+
+  if (!extension) {
+    throw new Error("Formato invalido. Envie JPG, PNG ou WEBP.");
+  }
+
   const storageKey = `${storagePrefix(productId)}/${crypto.randomUUID()}.${extension}`;
   const fileBytes = Buffer.from(await file.arrayBuffer());
   const { error } = await supabase.storage.from(bucket).upload(storageKey, fileBytes, {

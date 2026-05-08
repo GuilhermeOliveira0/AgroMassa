@@ -30,101 +30,144 @@ function isOptionalPositiveInteger(value: string) {
   return /^\d+$/.test(value) && Number.parseInt(value, 10) > 0;
 }
 
+function isOptionalPlausibleYear(value: string) {
+  if (!isOptionalPositiveInteger(value)) {
+    return false;
+  }
+
+  if (!value) {
+    return true;
+  }
+
+  const year = Number.parseInt(value, 10);
+  const maxYear = new Date().getFullYear() + 1;
+
+  return year >= 1900 && year <= maxYear;
+}
+
 function isOptionalMoneyValue(value: string) {
   if (!value) {
     return true;
   }
 
-  return /^\d+([,.]\d{1,2})?$/.test(value);
+  if (!/^\d+([,.]\d{1,2})?$/.test(value)) {
+    return false;
+  }
+
+  return Number.parseFloat(value.replace(",", ".")) > 0;
 }
 
-export const adminProductFormSchema = z
-  .object({
-    brand: optionalText,
-    category: optionalEnumValue(ADMIN_PRODUCT_CATEGORY_VALUES),
-    city: optionalText,
-    condition: optionalEnumValue(ADMIN_PRODUCT_CONDITION_VALUES),
-    description: optionalText,
-    intent: adminProductFormIntentSchema,
-    isArchived: z.boolean(),
-    isFeatured: z.boolean(),
-    isPublicVisible: z.boolean(),
-    mainImageId: optionalText,
-    model: optionalText,
-    name: optionalText,
-    price: optionalText.refine(isOptionalMoneyValue, {
-      message: "Informe um preco valido.",
-    }),
-    priceVisible: z.boolean(),
-    slug: optionalText,
-    state: optionalText,
-    status: z.enum(ADMIN_PRODUCT_STATUS_VALUES),
-    subcategory: optionalText,
-    technicalSpecs: optionalText,
-    year: optionalText.refine(isOptionalPositiveInteger, {
-      message: "Informe um ano valido.",
-    }),
+const adminProductBaseFormSchema = z.object({
+  brand: optionalText,
+  category: optionalEnumValue(ADMIN_PRODUCT_CATEGORY_VALUES),
+  city: optionalText,
+  condition: optionalEnumValue(ADMIN_PRODUCT_CONDITION_VALUES),
+  description: optionalText,
+  isArchived: z.boolean(),
+  isFeatured: z.boolean(),
+  isPublicVisible: z.boolean(),
+  mainImageId: optionalText,
+  model: optionalText,
+  name: optionalText,
+  price: optionalText.refine(isOptionalMoneyValue, {
+    message: "Informe um preco valido.",
+  }),
+  priceVisible: z.boolean(),
+  slug: optionalText,
+  state: optionalText,
+  status: z.enum(ADMIN_PRODUCT_STATUS_VALUES),
+  subcategory: optionalText,
+  technicalSpecs: optionalText,
+  year: optionalText.refine(isOptionalPlausibleYear, {
+    message: "Informe um ano entre 1900 e o proximo ano.",
+  }),
+});
+
+function addDraftIssues(
+  data: z.infer<typeof adminProductBaseFormSchema>,
+  context: z.RefinementCtx,
+) {
+  if (!data.name) {
+    context.addIssue({
+      code: "custom",
+      message: "Informe o nome do produto.",
+      path: ["name"],
+    });
+  }
+}
+
+const requiredPublicationFields: Array<
+  keyof z.infer<typeof adminProductBaseFormSchema>
+> = [
+  "slug",
+  "category",
+  "subcategory",
+  "brand",
+  "model",
+  "condition",
+  "description",
+  "technicalSpecs",
+  "city",
+  "state",
+];
+
+function addPublicationIssues(
+  data: z.infer<typeof adminProductBaseFormSchema>,
+  context: z.RefinementCtx,
+) {
+  addDraftIssues(data, context);
+
+  for (const field of requiredPublicationFields) {
+    if (!data[field]) {
+      context.addIssue({
+        code: "custom",
+        message: "Campo obrigatorio para publicar.",
+        path: [field],
+      });
+    }
+  }
+
+  if (data.status === "RASCUNHO") {
+    context.addIssue({
+      code: "custom",
+      message: "Escolha um status publicavel.",
+      path: ["status"],
+    });
+  }
+
+  if (!data.mainImageId) {
+    context.addIssue({
+      code: "custom",
+      message: "Produto publicado precisa de foto principal.",
+      path: ["mainImageId"],
+    });
+  }
+
+  if (data.state && data.state.length !== 2) {
+    context.addIssue({
+      code: "custom",
+      message: "Use a sigla do estado com 2 letras.",
+      path: ["state"],
+    });
+  }
+}
+
+export const adminDraftProductFormSchema = adminProductBaseFormSchema
+  .extend({
+    intent: z.literal("draft"),
   })
-  .superRefine((data, context) => {
-    if (!data.name) {
-      context.addIssue({
-        code: "custom",
-        message: "Informe o nome do produto.",
-        path: ["name"],
-      });
-    }
+  .superRefine(addDraftIssues);
 
-    if (data.intent === "draft") {
-      return;
-    }
+export const adminPublicationProductFormSchema = adminProductBaseFormSchema
+  .extend({
+    intent: z.literal("publish"),
+  })
+  .superRefine(addPublicationIssues);
 
-    const requiredFields: Array<keyof typeof data> = [
-      "slug",
-      "category",
-      "subcategory",
-      "brand",
-      "model",
-      "condition",
-      "description",
-      "technicalSpecs",
-      "city",
-      "state",
-    ];
-
-    for (const field of requiredFields) {
-      if (!data[field]) {
-        context.addIssue({
-          code: "custom",
-          message: "Campo obrigatorio para publicar.",
-          path: [field],
-        });
-      }
-    }
-
-    if (data.status === "RASCUNHO") {
-      context.addIssue({
-        code: "custom",
-        message: "Escolha um status publicavel.",
-        path: ["status"],
-      });
-    }
-
-    if (!data.mainImageId) {
-      context.addIssue({
-        code: "custom",
-        message: "Produto publicado precisa de foto principal.",
-        path: ["mainImageId"],
-      });
-    }
-
-    if (data.state && data.state.length !== 2) {
-      context.addIssue({
-        code: "custom",
-        message: "Use a sigla do estado com 2 letras.",
-        path: ["state"],
-      });
-    }
-  });
+export const adminProductFormSchema = z.union([
+  adminDraftProductFormSchema,
+  adminPublicationProductFormSchema,
+]);
 
 export type AdminProductFormInput = z.infer<typeof adminProductFormSchema>;
 

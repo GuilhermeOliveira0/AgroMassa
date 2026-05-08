@@ -598,6 +598,8 @@
 
 ### T29 - Consolidar validacoes de produto para rascunho, publicacao e upload
 
+**Status**: Concluida
+
 **Objetivo**: garantir que regras de negocio estejam aplicadas de forma consistente.
 **Arquivos provaveis envolvidos**: `src/validators/products/admin-product.ts`, `src/validators/products/public-filters.ts`, `src/validators/uploads/product-image.ts`
 **Passos de implementacao**:

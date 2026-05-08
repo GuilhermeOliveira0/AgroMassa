@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/db/prisma";
+import { MAX_PRODUCT_IMAGES_PER_PRODUCT } from "@/validators/uploads/product-image";
 
 import { setMainProductImage } from "./set-main-image";
+
+export class ProductImageAttachmentValidationError extends Error {}
 
 export type AttachProductImageInput = {
   adminId: string;
@@ -26,7 +29,7 @@ export async function validateProductImageAttachmentTarget(productId: string) {
   });
 
   if (!product) {
-    throw new Error("Produto nao encontrado.");
+    throw new ProductImageAttachmentValidationError("Produto nao encontrado.");
   }
 
   const imageCount = await prisma.productImage.count({
@@ -35,8 +38,10 @@ export async function validateProductImageAttachmentTarget(productId: string) {
     },
   });
 
-  if (imageCount >= 8) {
-    throw new Error("Limite de 8 imagens por produto atingido.");
+  if (imageCount >= MAX_PRODUCT_IMAGES_PER_PRODUCT) {
+    throw new ProductImageAttachmentValidationError(
+      `Limite de ${MAX_PRODUCT_IMAGES_PER_PRODUCT} imagens por produto atingido.`,
+    );
   }
 
   return imageCount;

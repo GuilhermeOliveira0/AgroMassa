@@ -2,15 +2,18 @@ import { NextResponse } from "next/server";
 
 import {
   attachProductImage,
+  ProductImageAttachmentValidationError,
   validateProductImageAttachmentTarget,
 } from "@/features/products/attach-product-image";
 import { getServerAuthSession } from "@/lib/auth/auth";
 import {
   getProductImageDisplayUrl,
-  PRODUCT_IMAGE_MIME_TYPES,
   uploadProductImage,
-  validateProductImageFile,
 } from "@/lib/storage/supabase-storage";
+import {
+  PRODUCT_IMAGE_MIME_TYPES,
+  validateProductImageFile,
+} from "@/validators/uploads/product-image";
 
 export const runtime = "nodejs";
 
@@ -111,13 +114,15 @@ export async function POST(request: Request) {
       error instanceof Error
         ? error.message
         : "Nao foi possivel enviar a imagem.";
+    const status =
+      error instanceof ProductImageAttachmentValidationError ? 400 : 500;
 
     return NextResponse.json(
       {
         error: message,
       },
       {
-        status: 500,
+        status,
       },
     );
   }
