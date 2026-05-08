@@ -495,6 +495,8 @@
 
 ### T24 - Integrar cliente de storage e endpoint autenticado de upload
 
+**Status**: Concluida
+
 **Objetivo**: criar a base tecnica para envio de imagens ao Supabase Storage.
 **Arquivos provaveis envolvidos**: `src/lib/storage/supabase-storage.ts`, `app/api/admin/uploads/route.ts`
 **Passos de implementacao**:
