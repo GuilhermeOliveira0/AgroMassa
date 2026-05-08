@@ -470,6 +470,8 @@
 
 ### T23 - Implementar criacao, edicao e arquivamento de produtos
 
+**Status**: Concluida
+
 **Objetivo**: conectar o formulario ao backend administrativo com regras de negocio.
 **Arquivos provaveis envolvidos**: `app/api/admin/produtos/route.ts`, `app/api/admin/produtos/[id]/route.ts`, `src/features/products/save-product.ts`, `src/features/products/archive-product.ts`
 **Passos de implementacao**:

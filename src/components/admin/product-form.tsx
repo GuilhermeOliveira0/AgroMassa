@@ -1,14 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+import { type FormEvent, useState, useTransition } from "react";
 
+import {
+  archiveProductAction,
+  saveProductAction,
+} from "@/features/products/admin-product-actions";
 import {
   ADMIN_PRODUCT_CATEGORY_VALUES,
   ADMIN_PRODUCT_CONDITION_VALUES,
   ADMIN_PRODUCT_STATUS_VALUES,
-  adminProductFormSchema,
+  adminProductFormFieldErrors,
+  adminProductFormInputFromFormData,
   type AdminProductFormInput,
+  type AdminProductFormFieldErrors,
+  adminProductFormSchema,
 } from "@/validators/products/admin-product";
 
 export type ProductFormInitialValues = Omit<
@@ -23,9 +31,6 @@ type ProductFormProps = {
   initialValues: ProductFormInitialValues;
   mode: "create" | "edit";
 };
-
-type FieldName = keyof AdminProductFormInput;
-type FieldErrors = Partial<Record<FieldName, string>>;
 
 const categoryLabels: Record<string, string> = {
   IMPLEMENTOS: "Implementos",
@@ -68,57 +73,6 @@ export function createEmptyProductFormValues(): ProductFormInitialValues {
     subcategory: "",
     technicalSpecs: "",
     year: "",
-  };
-}
-
-function toFieldErrors(
-  issues: ReturnType<typeof adminProductFormSchema.safeParse>,
-): FieldErrors {
-  if (issues.success) {
-    return {};
-  }
-
-  const fields = issues.error.flatten().fieldErrors;
-
-  return Object.fromEntries(
-    Object.entries(fields).map(([field, messages]) => [
-      field,
-      messages?.[0] ?? "",
-    ]),
-  ) as FieldErrors;
-}
-
-function buildFormInput(
-  formData: FormData,
-  intent: AdminProductFormInput["intent"],
-): AdminProductFormInput {
-  return {
-    brand: String(formData.get("brand") ?? ""),
-    category: String(
-      formData.get("category") ?? "",
-    ) as AdminProductFormInput["category"],
-    city: String(formData.get("city") ?? ""),
-    condition: String(
-      formData.get("condition") ?? "",
-    ) as AdminProductFormInput["condition"],
-    description: String(formData.get("description") ?? ""),
-    intent,
-    isArchived: formData.get("isArchived") === "on",
-    isFeatured: formData.get("isFeatured") === "on",
-    isPublicVisible: formData.get("isPublicVisible") === "on",
-    mainImageId: String(formData.get("mainImageId") ?? ""),
-    model: String(formData.get("model") ?? ""),
-    name: String(formData.get("name") ?? ""),
-    price: String(formData.get("price") ?? ""),
-    priceVisible: formData.get("priceVisible") === "on",
-    slug: String(formData.get("slug") ?? ""),
-    state: String(formData.get("state") ?? "").toUpperCase(),
-    status: String(
-      formData.get("status") ?? "RASCUNHO",
-    ) as AdminProductFormInput["status"],
-    subcategory: String(formData.get("subcategory") ?? ""),
-    technicalSpecs: String(formData.get("technicalSpecs") ?? ""),
-    year: String(formData.get("year") ?? ""),
   };
 }
 
@@ -258,7 +212,9 @@ function CheckboxInput({
 }
 
 export function ProductForm({ initialValues, mode }: ProductFormProps) {
-  const [errors, setErrors] = useState<FieldErrors>({});
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [errors, setErrors] = useState<AdminProductFormFieldErrors>({});
   const [feedback, setFeedback] = useState<string | null>(null);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -267,22 +223,59 @@ export function ProductForm({ initialValues, mode }: ProductFormProps) {
     const nativeEvent = event.nativeEvent as SubmitEvent;
     const submitter = nativeEvent.submitter as HTMLButtonElement | null;
     const intent = submitter?.value === "publish" ? "publish" : "draft";
+    const formData = new FormData(event.currentTarget);
     const result = adminProductFormSchema.safeParse(
-      buildFormInput(new FormData(event.currentTarget), intent),
+      adminProductFormInputFromFormData(formData, intent),
     );
 
-    setErrors(toFieldErrors(result));
+    setErrors(adminProductFormFieldErrors(result));
 
     if (!result.success) {
       setFeedback(null);
       return;
     }
 
-    setFeedback(
-      intent === "publish"
-        ? "Formulario valido para publicacao. A persistencia sera conectada na T23."
-        : "Rascunho valido. A persistencia sera conectada na T23.",
-    );
+    startTransition(async () => {
+      const actionResult = await saveProductAction({
+        formData,
+        intent,
+        productId: initialValues.id,
+      });
+
+      if (!actionResult.ok) {
+        setErrors(actionResult.fieldErrors ?? {});
+        setFeedback(actionResult.formError ?? null);
+        return;
+      }
+
+      setErrors({});
+      setFeedback("Produto salvo com sucesso.");
+
+      if (actionResult.redirectTo) {
+        router.push(actionResult.redirectTo);
+        router.refresh();
+      }
+    });
+  }
+
+  function handleArchive() {
+    const productId = initialValues.id;
+
+    if (!productId) {
+      return;
+    }
+
+    startTransition(async () => {
+      const actionResult = await archiveProductAction(productId);
+
+      if (!actionResult.ok) {
+        setFeedback(actionResult.formError ?? null);
+        return;
+      }
+
+      setFeedback("Produto arquivado com sucesso.");
+      router.refresh();
+    });
   }
 
   return (
@@ -512,20 +505,32 @@ export function ProductForm({ initialValues, mode }: ProductFormProps) {
       <div className="flex flex-wrap gap-3">
         <button
           className="inline-flex min-h-11 items-center justify-center rounded-md border border-agromassa-border bg-white px-5 text-sm font-black text-agromassa-forest transition hover:border-agromassa-forest"
+          disabled={isPending}
           name="intent"
           type="submit"
           value="draft"
         >
-          Salvar rascunho
+          {isPending ? "Salvando..." : "Salvar rascunho"}
         </button>
         <button
           className="inline-flex min-h-11 items-center justify-center rounded-md bg-agromassa-green px-5 text-sm font-black text-white transition hover:bg-[#2f9714]"
+          disabled={isPending}
           name="intent"
           type="submit"
           value="publish"
         >
-          Publicar produto
+          {isPending ? "Salvando..." : "Publicar produto"}
         </button>
+        {initialValues.id ? (
+          <button
+            className="inline-flex min-h-11 items-center justify-center rounded-md border border-red-200 bg-white px-5 text-sm font-black text-red-700 transition hover:border-red-600"
+            disabled={isPending || initialValues.isArchived}
+            onClick={handleArchive}
+            type="button"
+          >
+            {initialValues.isArchived ? "Produto arquivado" : "Arquivar produto"}
+          </button>
+        ) : null}
       </div>
     </form>
   );

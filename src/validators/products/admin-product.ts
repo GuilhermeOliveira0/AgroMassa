@@ -127,3 +127,58 @@ export const adminProductFormSchema = z
   });
 
 export type AdminProductFormInput = z.infer<typeof adminProductFormSchema>;
+
+export type AdminProductFormFieldErrors = Partial<
+  Record<keyof AdminProductFormInput, string>
+>;
+
+export function adminProductFormFieldErrors(
+  result: ReturnType<typeof adminProductFormSchema.safeParse>,
+): AdminProductFormFieldErrors {
+  if (result.success) {
+    return {};
+  }
+
+  const fields = result.error.flatten().fieldErrors;
+
+  return Object.fromEntries(
+    Object.entries(fields).map(([field, messages]) => [
+      field,
+      messages?.[0] ?? "",
+    ]),
+  ) as AdminProductFormFieldErrors;
+}
+
+export function adminProductFormInputFromFormData(
+  formData: FormData,
+  intent: AdminProductFormInput["intent"],
+): AdminProductFormInput {
+  return {
+    brand: String(formData.get("brand") ?? ""),
+    category: String(
+      formData.get("category") ?? "",
+    ) as AdminProductFormInput["category"],
+    city: String(formData.get("city") ?? ""),
+    condition: String(
+      formData.get("condition") ?? "",
+    ) as AdminProductFormInput["condition"],
+    description: String(formData.get("description") ?? ""),
+    intent,
+    isArchived: formData.get("isArchived") === "on",
+    isFeatured: formData.get("isFeatured") === "on",
+    isPublicVisible: formData.get("isPublicVisible") === "on",
+    mainImageId: String(formData.get("mainImageId") ?? ""),
+    model: String(formData.get("model") ?? ""),
+    name: String(formData.get("name") ?? ""),
+    price: String(formData.get("price") ?? ""),
+    priceVisible: formData.get("priceVisible") === "on",
+    slug: String(formData.get("slug") ?? ""),
+    state: String(formData.get("state") ?? "").toUpperCase(),
+    status: String(
+      formData.get("status") ?? "RASCUNHO",
+    ) as AdminProductFormInput["status"],
+    subcategory: String(formData.get("subcategory") ?? ""),
+    technicalSpecs: String(formData.get("technicalSpecs") ?? ""),
+    year: String(formData.get("year") ?? ""),
+  };
+}
