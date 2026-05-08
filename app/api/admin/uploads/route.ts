@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 
+import {
+  attachProductImage,
+  validateProductImageAttachmentTarget,
+} from "@/features/products/attach-product-image";
 import { getServerAuthSession } from "@/lib/auth/auth";
 import {
   PRODUCT_IMAGE_MIME_TYPES,
@@ -11,6 +15,14 @@ export const runtime = "nodejs";
 
 function firstFormValue(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : undefined;
+}
+
+function parseMainFlag(value: FormDataEntryValue | null) {
+  if (typeof value !== "string") {
+    return true;
+  }
+
+  return value !== "false";
 }
 
 export async function POST(request: Request) {
@@ -29,11 +41,23 @@ export async function POST(request: Request) {
 
   const formData = await request.formData();
   const file = formData.get("file");
+  const productId = firstFormValue(formData.get("productId"));
 
   if (!(file instanceof File)) {
     return NextResponse.json(
       {
         error: "Envie uma imagem no campo file.",
+      },
+      {
+        status: 400,
+      },
+    );
+  }
+
+  if (!productId) {
+    return NextResponse.json(
+      {
+        error: "Informe o produto para vincular a imagem.",
       },
       {
         status: 400,
@@ -56,22 +80,33 @@ export async function POST(request: Request) {
   }
 
   try {
-    const image = await uploadProductImage({
+    await validateProductImageAttachmentTarget(productId);
+
+    const uploadedImage = await uploadProductImage({
       file,
-      productId: firstFormValue(formData.get("productId")),
+      productId,
+    });
+    const image = await attachProductImage({
+      ...uploadedImage,
+      adminId: session.user.id,
+      height: null,
+      isMain: parseMainFlag(formData.get("isMain")),
+      productId,
+      width: null,
     });
 
     return NextResponse.json({
-      image: {
-        ...image,
-        height: null,
-        width: null,
-      },
+      image,
     });
-  } catch {
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Nao foi possivel enviar a imagem.";
+
     return NextResponse.json(
       {
-        error: "Nao foi possivel enviar a imagem. Revise o storage e tente novamente.",
+        error: message,
       },
       {
         status: 500,

@@ -514,6 +514,8 @@
 
 ### T25 - Persistir metadados de imagem e vincular ao produto
 
+**Status**: Concluida
+
 **Objetivo**: gravar `product_images` e permitir definicao de imagem principal.
 **Arquivos provaveis envolvidos**: `src/features/products/attach-product-image.ts`, `src/features/products/set-main-image.ts`, `app/api/admin/uploads/route.ts`
 **Passos de implementacao**:
