@@ -1,11 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import type { PublicSiteSettings } from "@/features/institutional/get-site-settings";
 import {
   buildInstitutionalWhatsAppMessage,
   buildWhatsAppUrl,
 } from "@/lib/utils/whatsapp";
+import type { PublicSiteSettings } from "@/types/site-settings";
 
 type HomeHeroProps = {
   settings: PublicSiteSettings;

@@ -557,6 +557,8 @@
 
 ### T27 - Criar leitura centralizada de configuracoes institucionais
 
+**Status**: Concluida
+
 **Objetivo**: centralizar consulta de `site_settings` para uso publico e administrativo.
 **Arquivos provaveis envolvidos**: `src/features/institutional/get-site-settings.ts`, `src/types/site-settings.ts`
 **Passos de implementacao**:

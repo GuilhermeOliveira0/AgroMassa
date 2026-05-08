@@ -1,24 +1,27 @@
 import Link from "next/link";
 
-const dashboardCards = [
-  {
-    label: "Produtos",
-    value: "Listagem",
-    description: "Localize tratores e implementos cadastrados no banco.",
-  },
-  {
-    label: "Institucional",
-    value: "AgroMassa",
-    description: "Mantenha contatos e apresentacao alinhados ao site publico.",
-  },
-  {
-    label: "Site publico",
-    value: "Online",
-    description: "Home, catalogo, detalhes e CTAs de WhatsApp ativos.",
-  },
-];
+import { getSiteSettings } from "@/features/institutional/get-site-settings";
 
-export default function AdminDashboardPage() {
+export default async function AdminDashboardPage() {
+  const settings = await getSiteSettings();
+  const dashboardCards = [
+    {
+      label: "Produtos",
+      value: "Listagem",
+      description: "Localize tratores e implementos cadastrados no banco.",
+    },
+    {
+      label: "Institucional",
+      value: settings.companyName,
+      description: `${settings.city}, ${settings.state} - ${settings.whatsappDisplay}`,
+    },
+    {
+      label: "Site publico",
+      value: "Online",
+      description: "Home, catalogo, detalhes e CTAs de WhatsApp ativos.",
+    },
+  ];
+
   return (
     <main className="px-4 py-6 sm:px-6 lg:px-8">
       <section className="rounded-lg border border-agromassa-border bg-white p-5 sm:p-6">
@@ -28,7 +31,7 @@ export default function AdminDashboardPage() {
               Dashboard
             </p>
             <h2 className="mt-2 text-3xl font-black text-agromassa-ink">
-              Base administrativa pronta.
+              Base administrativa da {settings.companyName}.
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-agromassa-muted">
               Use este painel para acompanhar os modulos do MVP. As proximas

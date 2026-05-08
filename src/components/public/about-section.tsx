@@ -1,8 +1,8 @@
-import type { PublicSiteSettings } from "@/features/institutional/get-site-settings";
 import {
   buildInstitutionalWhatsAppMessage,
   buildWhatsAppUrl,
 } from "@/lib/utils/whatsapp";
+import type { PublicSiteSettings } from "@/types/site-settings";
 
 type AboutSectionProps = {
   settings: PublicSiteSettings;
