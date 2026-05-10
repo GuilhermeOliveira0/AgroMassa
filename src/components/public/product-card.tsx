@@ -2,6 +2,12 @@ import Link from "next/link";
 
 import type { PublicProductListItem } from "@/features/products/public-list-products";
 import {
+  formatProductPrice,
+  getProductCategoryLabel,
+  getProductConditionLabel,
+  getProductStatusLabel,
+} from "@/lib/utils/product-display";
+import {
   buildProductWhatsAppMessage,
   buildWhatsAppUrl,
 } from "@/lib/utils/whatsapp";
@@ -13,36 +19,6 @@ type ProductCardProps = {
   whatsappPhone: string;
 };
 
-const categoryLabels: Record<string, string> = {
-  TRATORES: "Tratores",
-  IMPLEMENTOS: "Implementos",
-};
-
-const conditionLabels: Record<string, string> = {
-  NOVO: "Novo",
-  USADO: "Usado",
-  SEMINOVO: "Seminovo",
-};
-
-const statusLabels: Record<string, string> = {
-  DISPONIVEL: "Disponivel",
-  VENDIDO: "Vendido",
-  SOB_CONSULTA: "Sob consulta",
-  ALUGADO: "Alugado",
-};
-
-function formatPrice(product: PublicProductListItem) {
-  if (!product.priceVisible || product.priceCents === null) {
-    return "Sob consulta";
-  }
-
-  return new Intl.NumberFormat("pt-BR", {
-    currency: "BRL",
-    maximumFractionDigits: 0,
-    style: "currency",
-  }).format(product.priceCents / 100);
-}
-
 export function ProductCard({ product, whatsappPhone }: ProductCardProps) {
   const whatsappUrl = buildWhatsAppUrl({
     message: buildProductWhatsAppMessage({
@@ -53,30 +29,40 @@ export function ProductCard({ product, whatsappPhone }: ProductCardProps) {
 
   return (
     <article className="group overflow-hidden rounded-lg border border-agromassa-border bg-white">
-      <div className="relative aspect-[4/3] overflow-hidden bg-agromassa-ink">
-        <ProductCardImage
-          alt={product.mainImage.altText}
-          src={product.mainImage.publicUrl}
-        />
-        {product.isFeatured ? (
-          <span className="absolute left-3 top-3 rounded-md bg-agromassa-green px-3 py-1 text-xs font-black uppercase text-white">
-            Destaque
-          </span>
-        ) : null}
-      </div>
+      <Link
+        className="block rounded-md outline-none focus-visible:ring-2 focus-visible:ring-agromassa-green"
+        href={`/produtos/${product.slug}`}
+      >
+        <div className="relative aspect-[4/3] overflow-hidden bg-agromassa-ink">
+          <ProductCardImage
+            alt={product.mainImage.altText}
+            src={product.mainImage.publicUrl}
+          />
+          {product.isFeatured ? (
+            <span className="absolute left-3 top-3 rounded-md bg-agromassa-green px-3 py-1 text-xs font-black uppercase text-white">
+              Destaque
+            </span>
+          ) : null}
+        </div>
+      </Link>
 
       <div className="p-5">
         <div className="flex flex-wrap gap-2">
           <span className="rounded-md bg-agromassa-cream px-2.5 py-1 text-xs font-black uppercase text-agromassa-forest">
-            {categoryLabels[product.category] ?? product.category}
+            {getProductCategoryLabel(product.category)}
           </span>
           <span className="rounded-md bg-agromassa-ink px-2.5 py-1 text-xs font-black uppercase text-white">
-            {statusLabels[product.status] ?? product.status}
+            {getProductStatusLabel(product.status)}
           </span>
         </div>
 
         <h2 className="mt-4 text-xl font-black leading-tight text-agromassa-ink">
-          {product.name}
+          <Link
+            className="rounded-sm outline-none transition hover:text-agromassa-forest focus-visible:ring-2 focus-visible:ring-agromassa-green"
+            href={`/produtos/${product.slug}`}
+          >
+            {product.name}
+          </Link>
         </h2>
 
         <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
@@ -95,7 +81,7 @@ export function ProductCard({ product, whatsappPhone }: ProductCardProps) {
           <div>
             <dt className="font-bold text-agromassa-muted">Condicao</dt>
             <dd className="mt-1 font-black text-agromassa-ink">
-              {conditionLabels[product.condition] ?? product.condition}
+              {getProductConditionLabel(product.condition)}
             </dd>
           </div>
           <div>
@@ -111,7 +97,7 @@ export function ProductCard({ product, whatsappPhone }: ProductCardProps) {
             Preco
           </p>
           <p className="mt-1 text-2xl font-black text-agromassa-forest">
-            {formatPrice(product)}
+            {formatProductPrice(product)}
           </p>
         </div>
 

@@ -243,7 +243,7 @@ async function findSeedAdmin(prisma: PrismaClient) {
 async function upsertSiteSettings(prisma: PrismaClient, adminId: string) {
   const siteSettingsData = {
     companyName: "AgroMassa",
-    logoPath: "/brand/agromassa.jpeg",
+    logoPath: "/brand/agromassa1.jpeg",
     institutionalText:
       "A AgroMassa atua na compra, venda, troca e locacao de tratores e implementos agricolas, conectando produtores rurais a maquinas e equipamentos adequados para o trabalho no campo.",
     servicesText:

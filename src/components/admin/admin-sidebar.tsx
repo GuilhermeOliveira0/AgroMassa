@@ -31,7 +31,7 @@ export function AdminSidebar() {
           className="h-12 w-12 rounded-md border border-white/12 object-cover"
           height={48}
           priority
-          src="/brand/agromassa.jpeg"
+          src="/brand/agromassa1.jpeg"
           width={48}
         />
         <div className="min-w-0">

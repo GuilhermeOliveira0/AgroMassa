@@ -26,10 +26,12 @@ type PersistedSiteSettings = Prisma.SiteSettingGetPayload<{
   select: typeof siteSettingsSelect;
 }>;
 
+const ACTIVE_LOGO_PATH = "/brand/agromassa1.jpeg";
+
 const FALLBACK_SITE_SETTINGS: SiteSettings = {
   id: null,
   companyName: "AgroMassa",
-  logoPath: "/brand/agromassa.jpeg",
+  logoPath: ACTIVE_LOGO_PATH,
   institutionalText:
     "A AgroMassa atua na compra, venda, troca e locacao de tratores e implementos agricolas, conectando produtores rurais a maquinas e equipamentos adequados para o trabalho no campo.",
   servicesText:
@@ -48,7 +50,7 @@ function mapSiteSettings(settings: PersistedSiteSettings): SiteSettings {
   return {
     id: settings.id,
     companyName: settings.companyName,
-    logoPath: settings.logoPath,
+    logoPath: ACTIVE_LOGO_PATH,
     institutionalText: settings.institutionalText,
     servicesText: settings.servicesText,
     phoneDisplay: settings.phoneDisplay,

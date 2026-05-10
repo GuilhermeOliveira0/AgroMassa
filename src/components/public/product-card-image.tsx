@@ -10,7 +10,7 @@ export function ProductCardImage({ alt, src }: ProductCardImageProps) {
       className="h-full w-full bg-cover bg-center transition duration-300 group-hover:scale-[1.03]"
       role="img"
       style={{
-        backgroundImage: `url("${src.replaceAll('"', '\\"')}"), url("/brand/agromassa.jpeg")`,
+        backgroundImage: `url("${src.replaceAll('"', '\\"')}"), url("/brand/agromassa1.jpeg")`,
       }}
     />
   );

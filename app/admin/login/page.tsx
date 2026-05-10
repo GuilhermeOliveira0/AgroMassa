@@ -1,7 +1,5 @@
 import Image from "next/image";
 
-import agromassaLogo from "../../../agromassa.jpeg";
-
 import { AdminLoginForm } from "@/components/admin/login-form";
 
 type AdminLoginPageProps = {
@@ -18,42 +16,34 @@ export default async function AdminLoginPage({
   return (
     <main className="min-h-screen bg-agromassa-cream text-agromassa-ink">
       <div className="grid min-h-screen lg:grid-cols-[1.15fr_0.85fr]">
-        <section className="relative flex min-h-[320px] items-end overflow-hidden bg-agromassa-forest px-6 py-8 text-white sm:px-10 lg:min-h-screen lg:px-14 lg:py-14">
+        <section className="relative flex min-h-[320px] items-center justify-center overflow-hidden bg-agromassa-forest px-6 py-8 text-white sm:px-10 lg:min-h-screen lg:px-14 lg:py-14">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(57,179,26,0.28),transparent_42%),linear-gradient(180deg,rgba(17,17,17,0.16),rgba(17,17,17,0.72))]" />
 
-          <div className="relative z-10 mx-auto flex w-full max-w-2xl flex-col gap-8">
-            <div className="flex items-center gap-4">
+          <div className="relative z-10 mx-auto flex w-full max-w-xl flex-col items-center gap-8 text-center">
+            <div className="flex flex-col items-center gap-4">
               <div className="overflow-hidden rounded-lg border border-white/10 bg-white/95 p-2 shadow-lg">
                 <Image
                   alt="Logo AgroMassa"
                   className="h-16 w-16 object-cover sm:h-20 sm:w-20"
+                  height={80}
                   priority
-                  src={agromassaLogo}
+                  src="/brand/agromassa1.jpeg"
+                  width={80}
                 />
               </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/75">
-                  AgroMassa
-                </p>
-                <h1 className="mt-2 text-3xl font-black sm:text-5xl">
-                  Acesso administrativo
-                </h1>
-              </div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/75">
+                AgroMassa
+              </p>
+              <h1 className="text-3xl font-black sm:text-5xl">
+                Acesso administrativo
+              </h1>
             </div>
 
-            <div className="max-w-xl space-y-4">
+            <div className="max-w-xl">
               <p className="text-base leading-7 text-white/78 sm:text-lg">
                 Entre com a conta administrativa para gerenciar produtos e
                 informacoes institucionais da AgroMassa.
               </p>
-              <div className="grid gap-3 text-sm text-white/78 sm:grid-cols-2">
-                <div className="rounded-lg border border-white/10 bg-white/5 px-4 py-3">
-                  Catalogo de tratores e implementos
-                </div>
-                <div className="rounded-lg border border-white/10 bg-white/5 px-4 py-3">
-                  Atendimento comercial em Sao Francisco, SP
-                </div>
-              </div>
             </div>
           </div>
         </section>

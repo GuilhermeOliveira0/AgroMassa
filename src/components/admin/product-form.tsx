@@ -9,6 +9,11 @@ import {
   saveProductAction,
 } from "@/features/products/admin-product-actions";
 import {
+  PRODUCT_CATEGORY_LABELS,
+  PRODUCT_CONDITION_LABELS,
+  PRODUCT_STATUS_LABELS,
+} from "@/lib/utils/product-display";
+import {
   ADMIN_PRODUCT_CATEGORY_VALUES,
   ADMIN_PRODUCT_CONDITION_VALUES,
   ADMIN_PRODUCT_STATUS_VALUES,
@@ -37,25 +42,6 @@ export type ProductFormInitialValues = Omit<
 type ProductFormProps = {
   initialValues: ProductFormInitialValues;
   mode: "create" | "edit";
-};
-
-const categoryLabels: Record<string, string> = {
-  IMPLEMENTOS: "Implementos",
-  TRATORES: "Tratores",
-};
-
-const conditionLabels: Record<string, string> = {
-  NOVO: "Novo",
-  SEMINOVO: "Seminovo",
-  USADO: "Usado",
-};
-
-const statusLabels: Record<string, string> = {
-  ALUGADO: "Alugado",
-  DISPONIVEL: "Disponivel",
-  RASCUNHO: "Rascunho",
-  SOB_CONSULTA: "Sob consulta",
-  VENDIDO: "Vendido",
 };
 
 function FieldError({ message }: { message?: string }) {
@@ -337,7 +323,7 @@ export function ProductForm({ initialValues, mode }: ProductFormProps) {
             options={Object.fromEntries(
               ADMIN_PRODUCT_CATEGORY_VALUES.map((value) => [
                 value,
-                categoryLabels[value],
+                PRODUCT_CATEGORY_LABELS[value],
               ]),
             )}
             value={initialValues.category}
@@ -378,7 +364,7 @@ export function ProductForm({ initialValues, mode }: ProductFormProps) {
             options={Object.fromEntries(
               ADMIN_PRODUCT_CONDITION_VALUES.map((value) => [
                 value,
-                conditionLabels[value],
+                PRODUCT_CONDITION_LABELS[value],
               ]),
             )}
             value={initialValues.condition}
@@ -420,7 +406,7 @@ export function ProductForm({ initialValues, mode }: ProductFormProps) {
             options={Object.fromEntries(
               ADMIN_PRODUCT_STATUS_VALUES.map((value) => [
                 value,
-                statusLabels[value],
+                PRODUCT_STATUS_LABELS[value],
               ]),
             )}
             value={initialValues.status}

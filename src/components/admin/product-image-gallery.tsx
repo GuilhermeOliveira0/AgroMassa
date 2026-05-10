@@ -88,7 +88,7 @@ export function ProductImageGallery({
                 className="aspect-[4/3] bg-agromassa-ink bg-cover bg-center"
                 role="img"
                 style={{
-                  backgroundImage: `url("${image.publicUrl.replaceAll('"', '\\"')}"), url("/brand/agromassa.jpeg")`,
+                  backgroundImage: `url("${image.publicUrl.replaceAll('"', '\\"')}"), url("/brand/agromassa1.jpeg")`,
                 }}
               />
               <div className="grid gap-3 p-4">

@@ -93,14 +93,14 @@ const publicProductListSelect = {
   isFeatured: true,
   publishedAt: true,
   createdAt: true,
-    mainImage: {
-      select: {
-        id: true,
-        publicUrl: true,
-        storageKey: true,
-        originalFilename: true,
-        width: true,
-        height: true,
+  mainImage: {
+    select: {
+      id: true,
+      publicUrl: true,
+      storageKey: true,
+      originalFilename: true,
+      width: true,
+      height: true,
     },
   },
 } satisfies Prisma.ProductSelect;

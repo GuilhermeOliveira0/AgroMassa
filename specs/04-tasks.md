@@ -684,6 +684,38 @@
 
 ---
 
+## Fase 13. Qualidade tecnica e manutencao
+
+### T33 - Validar qualidade tecnica, otimizar estrutura e limpar codigo do MVP
+
+**Status**: Concluida
+
+**Objetivo**: revisar a base tecnica do MVP para manter o codigo mais simples, limpo, escalavel e sem elementos desnecessarios, preservando integralmente os comportamentos publico e administrativo ja validados.
+**Arquivos provaveis envolvidos**: ajustes eventuais em `app/**/*`, `src/components/**/*`, `src/features/**/*`, `src/lib/**/*`, `src/validators/**/*` e documentacao de recomendacoes quando houver pontos grandes demais para alterar com seguranca.
+**Passos de implementacao**:
+- revisar codigo duplicado, codigo morto, imports nao usados e nomes ruins ou confusos
+- verificar separacao entre Server Components, Client Components, queries, validators, server actions e utilitarios
+- revisar componentes grandes demais e dividir apenas quando for seguro e sem alterar comportamento
+- revisar tratamento de erros, uso de tipagem TypeScript, constantes magicas e logica repetida que possa ser centralizada
+- revisar responsividade basica sem redesenhar a UI nem fazer mudancas cosmeticas amplas
+- aplicar somente refatoracoes pequenas, seguras e rastreaveis; registrar como recomendacao qualquer ajuste perigoso ou grande demais
+- preservar schema Prisma, migracoes, regras de negocio, autenticacao, middleware/proxy, bibliotecas, `.env` real e segredos
+- executar os gates `npx prisma validate`, `npm run typecheck`, `npm run lint` e `npm run build`
+**Criterios de conclusao**:
+- codigo revisado sem alteracao de comportamento publico ou administrativo validado
+- duplicacoes, imports inutilizados, nomes confusos e constantes magicas foram ajustados apenas quando isso for seguro
+- organizacao entre queries, validators, server actions, utilitarios e componentes continua clara para proximas features
+- pontos grandes, arriscados ou fora de escopo foram registrados como recomendacao, nao implementados
+- todos os gates obrigatorios passam
+**Testes manuais necessarios**:
+- abrir `/`, `/produtos` e `/produtos/[slug]` para confirmar catalogo, detalhe, galeria e CTAs de WhatsApp
+- abrir `/admin`, `/admin/produtos`, `/admin/produtos/novo`, `/admin/produtos/[id]` e `/admin/institucional`
+- validar cadastro, edicao, upload, publicacao, arquivamento e configuracoes institucionais em fluxo basico
+- revisar responsividade basica das telas publicas e administrativas sem exigir redesenho
+**Dependencias**: T32
+
+---
+
 ## Sequenciamento resumido
 
 ```text
@@ -701,6 +733,7 @@ T05 -> T27 -> T28
 T23 + T26 -> T29 -> T30
 T19 + T17 + T15 -> T31
 T28 + T30 + T31 -> T32
+T32 -> T33
 ```
 
 ---

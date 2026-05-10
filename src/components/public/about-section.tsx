@@ -53,15 +53,11 @@ export function AboutSection({ settings }: AboutSectionProps) {
           </h2>
           <dl className="mt-5 space-y-4 text-sm">
             <div>
-              <dt className="font-bold text-agromassa-muted">WhatsApp</dt>
+              <dt className="font-bold text-agromassa-muted">
+                WhatsApp e Telefone
+              </dt>
               <dd className="mt-1 text-lg font-black text-agromassa-ink">
                 {settings.whatsappDisplay}
-              </dd>
-            </div>
-            <div>
-              <dt className="font-bold text-agromassa-muted">Telefone</dt>
-              <dd className="mt-1 text-lg font-black text-agromassa-ink">
-                {settings.phoneDisplay}
               </dd>
             </div>
             <div>

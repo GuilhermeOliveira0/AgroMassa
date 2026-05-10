@@ -1,5 +1,11 @@
 import type { PublicProductDetail } from "@/features/products/get-public-product-by-slug";
 import {
+  formatProductPrice,
+  getProductCategoryLabel,
+  getProductConditionLabel,
+  getProductStatusLabel,
+} from "@/lib/utils/product-display";
+import {
   buildProductWhatsAppMessage,
   buildWhatsAppUrl,
 } from "@/lib/utils/whatsapp";
@@ -8,36 +14,6 @@ type ProductDetailProps = {
   product: PublicProductDetail;
   whatsappPhone: string;
 };
-
-const categoryLabels: Record<string, string> = {
-  TRATORES: "Tratores",
-  IMPLEMENTOS: "Implementos",
-};
-
-const conditionLabels: Record<string, string> = {
-  NOVO: "Novo",
-  USADO: "Usado",
-  SEMINOVO: "Seminovo",
-};
-
-const statusLabels: Record<string, string> = {
-  DISPONIVEL: "Disponivel",
-  VENDIDO: "Vendido",
-  SOB_CONSULTA: "Sob consulta",
-  ALUGADO: "Alugado",
-};
-
-function formatPrice(product: PublicProductDetail) {
-  if (!product.priceVisible || product.priceCents === null) {
-    return "Sob consulta";
-  }
-
-  return new Intl.NumberFormat("pt-BR", {
-    currency: "BRL",
-    maximumFractionDigits: 0,
-    style: "currency",
-  }).format(product.priceCents / 100);
-}
 
 function DetailItem({
   label,
@@ -61,7 +37,7 @@ function DetailItem({
 }
 
 export function ProductDetail({ product, whatsappPhone }: ProductDetailProps) {
-  const priceLabel = formatPrice(product);
+  const priceLabel = formatProductPrice(product);
   const whatsappUrl = buildWhatsAppUrl({
     message: buildProductWhatsAppMessage({
       productName: product.name,
@@ -74,10 +50,10 @@ export function ProductDetail({ product, whatsappPhone }: ProductDetailProps) {
       <div className="rounded-lg border border-agromassa-border bg-white p-5 sm:p-6">
         <div className="flex flex-wrap gap-2">
           <span className="rounded-md bg-agromassa-cream px-3 py-1 text-xs font-black uppercase text-agromassa-forest">
-            {categoryLabels[product.category] ?? product.category}
+            {getProductCategoryLabel(product.category)}
           </span>
           <span className="rounded-md bg-agromassa-ink px-3 py-1 text-xs font-black uppercase text-white">
-            {statusLabels[product.status] ?? product.status}
+            {getProductStatusLabel(product.status)}
           </span>
         </div>
 
@@ -104,7 +80,7 @@ export function ProductDetail({ product, whatsappPhone }: ProductDetailProps) {
         <DetailItem label="Modelo" value={product.model} />
         <DetailItem
           label="Condicao"
-          value={conditionLabels[product.condition] ?? product.condition}
+          value={getProductConditionLabel(product.condition)}
         />
         <DetailItem label="Ano" value={product.year} />
         <DetailItem label="Categoria" value={product.subcategory} />

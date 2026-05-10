@@ -13,6 +13,8 @@ type SiteFooterProps = {
 };
 
 export function SiteFooter({ settings }: SiteFooterProps) {
+  const currentYear = new Date().getFullYear();
+
   return (
     <footer className="bg-agromassa-ink text-white">
       <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1.2fr_0.8fr_0.8fr] lg:px-8">
@@ -42,8 +44,7 @@ export function SiteFooter({ settings }: SiteFooterProps) {
             Contato
           </h2>
           <address className="mt-4 space-y-2 text-sm not-italic text-white/72">
-            <p>WhatsApp: {settings.whatsappDisplay}</p>
-            <p>Telefone: {settings.phoneDisplay}</p>
+            <p>WhatsApp e Telefone: {settings.whatsappDisplay}</p>
             <p>
               {settings.city}, {settings.state}
             </p>
@@ -68,7 +69,7 @@ export function SiteFooter({ settings }: SiteFooterProps) {
         </section>
       </div>
       <div className="border-t border-white/10 px-4 py-4 text-center text-xs text-white/55">
-        {settings.companyName}. Todos os direitos reservados.
+        {settings.companyName} &copy; {currentYear}. Todos os direitos reservados.
       </div>
     </footer>
   );
