@@ -716,6 +716,394 @@
 
 ---
 
+## Fase 14. Melhorias de usabilidade e operacao administrativa
+
+### T34 - Implementar feedback global, toasts e mensagens de validacao
+
+**Status**: Concluida
+
+**Objetivo**: criar um sistema global de notificacoes visuais para informar sucesso, erro, validacao e falhas inesperadas nas principais acoes do sistema, evitando que o usuario fique sem retorno quando uma acao nao for concluida.
+
+**Arquivos provaveis envolvidos**: `src/components/ui/*`, `src/components/admin/*`, `src/features/products/*`, `src/features/institutional/*`, `app/admin/(protected)/*`, `app/api/admin/uploads/route.ts`, possivelmente `app/layout.tsx` ou layouts administrativos/publicos se for necessario registrar um provider global.
+
+**Passos de implementacao**:
+- antes de implementar, ler obrigatoriamente:
+  - `.codex/skills/tlc-spec-driven/SKILL.md`
+  - `.codex/skills/tlc-spec-driven/references/implement.md`
+  - `.codex/skills/tlc-spec-driven/references/coding-principles.md`
+  - `specs/01-ideia.md`
+  - `specs/02-spec.md`
+  - `specs/03-design.md`
+  - `specs/04-tasks.md`
+- revisar os fluxos administrativos que hoje podem falhar sem feedback claro
+- criar ou integrar um mecanismo global de toasts/notificacoes no canto superior direito
+- exibir mensagem de sucesso ao salvar rascunho de produto
+- exibir mensagem de sucesso ao publicar produto
+- exibir mensagem de sucesso ao editar produto existente
+- exibir mensagem de sucesso ao arquivar produto
+- exibir mensagem de sucesso ao salvar configuracoes institucionais
+- exibir mensagem de sucesso ao enviar imagem
+- exibir mensagem clara quando faltar campo obrigatorio para publicar
+- exibir mensagem clara quando upload falhar por tipo invalido, tamanho invalido, limite de imagens ou erro inesperado
+- exibir mensagem generica e segura para falhas inesperadas, sem vazar detalhes internos
+- manter erros especificos de campos quando ja existirem, usando o toast como reforco visual
+- garantir que as mensagens funcionem em mobile e desktop
+- manter o comportamento atual das acoes, alterando apenas o feedback visual
+- preservar as regras de negocio, validacoes, autenticacao, upload, publicacao, arquivamento e configuracoes existentes
+- executar os gates `npx prisma validate`, `npm run typecheck`, `npm run lint` e `npm run build`
+
+**Criterios de conclusao**:
+- usuario recebe feedback visivel quando uma acao administrativa e concluida com sucesso
+- usuario recebe feedback visivel quando uma acao falha por validacao
+- usuario recebe feedback visivel quando ocorre erro inesperado
+- salvar rascunho, publicar, editar, arquivar, upload e configuracoes institucionais nao ficam mais silenciosos
+- mensagens de erro nao vazam stack trace, segredo, query, token, URL sensivel ou detalhe interno
+- fluxos publicos continuam funcionando sem alteracao de comportamento
+- fluxos administrativos existentes continuam funcionando sem alteracao de regra de negocio
+- notificacoes aparecem corretamente em mobile e desktop
+- todos os gates obrigatorios passam
+
+**Testes manuais necessarios**:
+- abrir `/admin/produtos/novo` e salvar rascunho com campos minimos, confirmando toast de sucesso
+- tentar publicar produto sem campos obrigatorios, confirmando toast de erro claro
+- publicar produto completo com imagem principal, confirmando toast de sucesso
+- editar produto existente em `/admin/produtos/[id]`, confirmando toast de sucesso
+- arquivar produto existente, confirmando toast de sucesso ou erro controlado
+- tentar upload com imagem valida, confirmando toast de sucesso
+- tentar upload com arquivo invalido ou acima do limite, confirmando toast de erro
+- editar `/admin/institucional` e confirmar toast de sucesso
+- simular erro inesperado quando possivel e confirmar mensagem generica segura
+- abrir `/`, `/produtos` e `/produtos/[slug]` para confirmar que o publico nao quebrou
+- testar em mobile e desktop
+
+**Dependencias**: T33
+
+### T35 - Melhorar dashboard administrativo com metricas operacionais
+
+**Status**: Concluida
+
+**Objetivo**: melhorar o dashboard administrativo para que o vendedor acompanhe rapidamente a situacao dos produtos cadastrados, publicados, disponiveis, visiveis, rascunhos, arquivados, destaques e produtos que precisam de atencao.
+
+**Arquivos provaveis envolvidos**: `app/admin/(protected)/page.tsx`, `src/features/products/*`, `src/components/admin/*`, possivelmente `src/types/*`.
+
+**Passos de implementacao**:
+- antes de implementar, ler obrigatoriamente:
+  - `.codex/skills/tlc-spec-driven/SKILL.md`
+  - `.codex/skills/tlc-spec-driven/references/implement.md`
+  - `.codex/skills/tlc-spec-driven/references/coding-principles.md`
+  - `specs/01-ideia.md`
+  - `specs/02-spec.md`
+  - `specs/03-design.md`
+  - `specs/04-tasks.md`
+- revisar o dashboard administrativo atual criado na T20
+- criar uma consulta administrativa centralizada para metricas do dashboard, sem duplicar regras desnecessarias
+- exibir total de produtos cadastrados
+- exibir total de produtos publicados
+- exibir total de produtos disponiveis
+- exibir total de produtos visiveis no site
+- exibir total de rascunhos
+- exibir total de produtos arquivados
+- exibir total de produtos em destaque
+- exibir total de produtos sem imagem principal
+- exibir alertas ou atalhos para itens que precisam de atencao, como rascunhos e produtos sem imagem principal
+- manter os atalhos existentes para produtos e institucional
+- garantir que as metricas considerem produtos arquivados, rascunhos e visibilidade de forma clara para o admin
+- manter o dashboard responsivo em mobile e desktop
+- preservar login, protecao admin, listagem, cadastro, upload, publicacao, arquivamento e configuracoes institucionais
+- executar os gates `npx prisma validate`, `npm run typecheck`, `npm run lint` e `npm run build`
+
+**Criterios de conclusao**:
+- dashboard administrativo mostra metricas uteis para o vendedor
+- total de produtos cadastrados aparece corretamente
+- produtos publicados, disponiveis, visiveis, rascunhos, arquivados, destaques e sem imagem principal aparecem de forma clara
+- cards/indicadores do dashboard sao responsivos
+- atalhos administrativos continuam funcionando
+- nenhuma regra de negocio de produto foi alterada
+- fluxo publico continua funcionando sem alteracao
+- todos os gates obrigatorios passam
+
+**Testes manuais necessarios**:
+- acessar `/admin` autenticado
+- conferir os cards de metricas no dashboard
+- criar ou editar produtos com status diferentes e confirmar reflexo nas metricas
+- confirmar que rascunhos aparecem na metrica correta
+- confirmar que arquivados aparecem na metrica correta
+- confirmar que produtos sem imagem principal aparecem como alerta ou indicador
+- abrir `/admin/produtos` e confirmar que a listagem continua funcionando
+- abrir `/admin/institucional` e confirmar que configuracoes continuam funcionando
+- abrir `/`, `/produtos` e `/produtos/[slug]` para confirmar que o publico nao quebrou
+- testar responsividade basica do dashboard em mobile e desktop
+
+**Dependencias**: T34
+
+### T36 - Adicionar acoes rapidas com confirmacao na listagem de produtos
+
+**Status**: Pendente
+
+**Objetivo**: permitir que o administrador execute acoes comuns diretamente na listagem de produtos, como alterar status, visibilidade, destaque e arquivamento/restauracao, usando confirmacoes e feedback visual para evitar operacoes silenciosas ou acidentais.
+
+**Arquivos provaveis envolvidos**: `app/admin/(protected)/produtos/page.tsx`, `src/components/admin/products-table.tsx`, `src/features/products/*`, `src/validators/products/*`, `src/components/admin/*`, possivelmente `src/components/ui/*`.
+
+**Passos de implementacao**:
+- antes de implementar, ler obrigatoriamente:
+  - `.codex/skills/tlc-spec-driven/SKILL.md`
+  - `.codex/skills/tlc-spec-driven/references/implement.md`
+  - `.codex/skills/tlc-spec-driven/references/coding-principles.md`
+  - `specs/01-ideia.md`
+  - `specs/02-spec.md`
+  - `specs/03-design.md`
+  - `specs/04-tasks.md`
+- revisar a listagem administrativa criada na T21
+- revisar as server actions e regras de negocio de produto criadas nas T23, T29 e T30
+- criar ou reutilizar server actions seguras para acoes rapidas
+- permitir alterar status do produto diretamente na listagem, se estiver dentro das regras existentes
+- permitir ativar/desativar visibilidade publica diretamente na listagem
+- permitir marcar/remover destaque diretamente na listagem
+- permitir arquivar/restaurar produto diretamente na listagem
+- usar modal ou confirmacao clara para acoes sensiveis, como arquivar e restaurar
+- usar o sistema de feedback/toast criado na T34 para sucesso, erro e validacao
+- manter as acoes desabilitadas ou protegidas quando o produto nao cumprir regras de publicacao
+- manter mensagens seguras sem vazar detalhes internos
+- preservar filtros, busca e responsividade da listagem
+- nao implementar exclusao definitiva de produto nesta task
+- nao implementar exclusao de imagem nesta task
+- nao alterar schema Prisma, migracoes, autenticacao, middleware/proxy ou regras publicas de visibilidade
+- executar os gates `npx prisma validate`, `npm run typecheck`, `npm run lint` e `npm run build`
+
+**Criterios de conclusao**:
+- administrador consegue alterar status, visibilidade, destaque e arquivamento/restauracao sem abrir a tela de edicao do produto
+- acoes sensiveis possuem confirmacao antes de executar
+- acoes executadas com sucesso exibem feedback visual claro
+- falhas de validacao ou erro inesperado exibem feedback visual seguro
+- a listagem continua exibindo produtos de todos os estados administrativos
+- rascunhos, arquivados e produtos invisiveis continuam respeitando as regras publicas existentes
+- nenhuma exclusao definitiva de produto foi implementada
+- fluxo publico continua funcionando sem alteracao
+- todos os gates obrigatorios passam
+
+**Testes manuais necessarios**:
+- acessar `/admin/produtos` autenticado
+- alterar visibilidade publica de um produto pela listagem e confirmar feedback
+- marcar e remover destaque de um produto pela listagem e confirmar feedback
+- alterar status quando permitido e confirmar reflexo na listagem
+- arquivar produto pela listagem, confirmar modal/confirmacao e validar que ele sai do publico
+- restaurar produto arquivado pela listagem, confirmar modal/confirmacao e validar comportamento
+- tentar acao invalida quando aplicavel e confirmar toast de erro
+- confirmar que busca e filtros da listagem continuam funcionando
+- abrir `/produtos` e `/produtos/[slug]` para confirmar que regras publicas continuam corretas
+- testar responsividade da listagem em mobile e desktop
+
+**Dependencias**: T35
+
+### T37 - Melhorar gerenciamento de imagens do produto
+
+**Status**: Pendente
+
+**Objetivo**: melhorar a galeria administrativa de imagens do produto, permitindo excluir imagens, trocar imagem principal com clareza e orientar o administrador quando uma ação puder afetar a exibição pública do produto.
+
+**Arquivos provaveis envolvidos**: `src/components/admin/product-image-uploader.tsx`, `src/components/admin/product-image-gallery.tsx`, `src/components/admin/product-form.tsx`, `src/features/products/*`, `app/api/admin/uploads/route.ts`, possivelmente `src/components/ui/*`.
+
+**Passos de implementacao**:
+- antes de implementar, ler obrigatoriamente:
+  - `.codex/skills/tlc-spec-driven/SKILL.md`
+  - `.codex/skills/tlc-spec-driven/references/implement.md`
+  - `.codex/skills/tlc-spec-driven/references/coding-principles.md`
+  - `specs/01-ideia.md`
+  - `specs/02-spec.md`
+  - `specs/03-design.md`
+  - `specs/04-tasks.md`
+- revisar a estrutura atual de upload e galeria administrativa criada nas tasks anteriores
+- revisar como `product_images` e `products.mainImageId` estao sendo persistidos
+- permitir excluir imagem vinculada ao produto, respeitando integridade entre produto e imagens
+- permitir trocar imagem principal de forma clara e segura
+- destacar visualmente qual imagem e a principal
+- mostrar aviso/confirmacao antes de excluir imagem
+- se a imagem excluida for a principal, avisar que o produto pode deixar de aparecer publicamente se ficar sem imagem principal
+- impedir que exclusao de imagem quebre a tela administrativa, catalogo publico ou pagina de detalhe
+- preservar o limite de 8 imagens por produto
+- preservar o upload existente
+- usar o sistema de feedback/toast criado na T34 para sucesso, erro e validacao
+- usar confirmacao/modal quando a acao for sensivel
+- nao implementar reordenacao de imagens nesta task, a menos que ja exista estrutura segura e simples
+- nao implementar exclusao definitiva de produto nesta task
+- nao alterar schema Prisma, migracoes, autenticacao, middleware/proxy ou regras publicas de visibilidade
+- executar os gates `npx prisma validate`, `npm run typecheck`, `npm run lint` e `npm run build`
+
+**Criterios de conclusao**:
+- administrador consegue visualizar claramente as imagens vinculadas ao produto
+- imagem principal fica identificada visualmente
+- administrador consegue trocar a imagem principal com feedback claro
+- administrador consegue excluir uma imagem com confirmacao
+- excluir imagem nao quebra o produto, o admin, o catalogo ou o detalhe publico
+- se produto publicado ficar sem imagem principal, o comportamento continua respeitando a regra publica existente
+- limite de 8 imagens continua funcionando
+- upload existente continua funcionando
+- nenhuma exclusao definitiva de produto foi implementada
+- todos os gates obrigatorios passam
+
+**Testes manuais necessarios**:
+- acessar `/admin/produtos/[id]` autenticado
+- enviar imagens validas ate o limite permitido
+- confirmar que a imagem principal aparece destacada
+- trocar imagem principal e confirmar feedback visual
+- abrir `/produtos` e confirmar que o card usa a nova imagem principal
+- abrir `/produtos/[slug]` e confirmar que a galeria usa as imagens corretas
+- excluir uma imagem que nao e principal e confirmar que o produto continua funcionando
+- tentar excluir a imagem principal e confirmar aviso/confirmacao
+- confirmar que produto sem imagem principal nao aparece publicamente se essa for a regra vigente
+- tentar exceder 8 imagens e confirmar erro controlado
+- testar responsividade da galeria administrativa em mobile e desktop
+
+**Dependencias**: T36
+
+
+### T38 - Implementar exclusao segura de produto e revisao final das melhorias
+
+**Status**: Pendente
+
+**Objetivo**: adicionar um fluxo seguro para exclusao de produto no painel administrativo, com confirmacao forte antes da acao, preservando a integridade de imagens, regras publicas e dados administrativos, e validar todo o sistema apos as melhorias de usabilidade.
+
+**Arquivos provaveis envolvidos**: `src/components/admin/product-form.tsx`, `src/components/admin/products-table.tsx`, `src/features/products/*`, `app/admin/(protected)/produtos/*`, `src/components/ui/*`, `src/lib/*`, possivelmente `app/api/admin/*`.
+
+**Passos de implementacao**:
+- antes de implementar, ler obrigatoriamente:
+  - `.codex/skills/tlc-spec-driven/SKILL.md`
+  - `.codex/skills/tlc-spec-driven/references/implement.md`
+  - `.codex/skills/tlc-spec-driven/references/coding-principles.md`
+  - `specs/01-ideia.md`
+  - `specs/02-spec.md`
+  - `specs/03-design.md`
+  - `specs/04-tasks.md`
+- revisar o fluxo atual de produtos criado nas tasks anteriores
+- revisar criacao, edicao, publicacao, arquivamento, upload, imagem principal e acoes rapidas
+- definir o comportamento mais seguro para exclusao de produto
+- adicionar botao de excluir produto onde fizer sentido no admin, como tela de edicao e/ou listagem
+- criar modal de confirmacao forte antes de excluir
+- deixar claro que a acao e sensivel e pode nao ser reversivel
+- se a exclusao for definitiva, exigir confirmacao explicita, como digitar `EXCLUIR`
+- se a exclusao definitiva for arriscada por causa de imagens no Storage ou integridade do banco, implementar apenas o fluxo seguro possivel e registrar recomendacao para uma etapa futura
+- garantir que produto excluido nao apareca no admin nem no publico, conforme regra definida na implementacao segura
+- garantir que produto arquivado continue funcionando como alternativa segura quando exclusao definitiva nao for apropriada
+- tratar imagens vinculadas ao produto com cuidado, sem deixar o sistema quebrado
+- usar o sistema de feedback/toast criado na T34 para sucesso, erro e falha inesperada
+- usar modal/confirmacao para qualquer acao destrutiva
+- preservar as melhorias da T35, T36 e T37
+- fazer revisao final das melhorias administrativas recentes
+- validar que dashboard, acoes rapidas, imagens, feedback visual e exclusao segura funcionam em conjunto
+- nao alterar schema Prisma, a menos que seja absolutamente necessario e previamente justificado
+- nao criar migracao sem necessidade comprovada
+- nao alterar autenticacao, middleware/proxy ou regras publicas de visibilidade
+- nao expor segredos, tokens ou valores reais do `.env`
+- executar os gates `npx prisma validate`, `npm run typecheck`, `npm run lint` e `npm run build`
+
+**Criterios de conclusao**:
+- existe um fluxo seguro para exclusao ou remocao controlada de produto
+- a acao de excluir possui modal de confirmacao forte
+- usuario entende claramente o risco antes de confirmar
+- acao destrutiva nao ocorre por clique acidental
+- feedback visual aparece em sucesso, erro e falha inesperada
+- produto removido nao quebra listagem admin, catalogo publico, detalhe publico, imagens ou dashboard
+- imagens vinculadas ao produto sao tratadas de forma segura conforme a estrategia escolhida
+- se exclusao definitiva nao for segura nesta etapa, a limitacao foi registrada claramente como recomendacao
+- dashboard, notificacoes, acoes rapidas e gerenciamento de imagens continuam funcionando
+- fluxo publico continua funcionando sem alteracao indesejada
+- fluxo administrativo continua funcionando sem regressao
+- todos os gates obrigatorios passam
+
+**Testes manuais necessarios**:
+- acessar `/admin/produtos` autenticado
+- abrir um produto existente em `/admin/produtos/[id]`
+- verificar se o botao de excluir/remover aparece somente onde fizer sentido
+- clicar em excluir e confirmar que modal de aviso aparece
+- cancelar a exclusao e confirmar que nada foi alterado
+- confirmar a exclusao seguindo a regra definida, como digitar `EXCLUIR` se implementado
+- validar feedback visual de sucesso ou erro
+- confirmar que o produto removido nao aparece onde nao deveria aparecer
+- confirmar que catalogo publico `/produtos` continua funcionando
+- confirmar que detalhe `/produtos/[slug]` de produto removido ou indisponivel nao quebra
+- confirmar que dashboard administrativo continua carregando metricas corretamente
+- confirmar que acoes rapidas da listagem continuam funcionando
+- confirmar que upload, troca de imagem principal e exclusao de imagem continuam funcionando
+- confirmar que `/admin/institucional` continua funcionando
+- testar responsividade basica em mobile e desktop
+- rodar o fluxo final: criar rascunho, adicionar imagem, publicar, alterar status/visibilidade, arquivar/restaurar e remover/excluir conforme implementado
+
+**Dependencias**: T37
+
+### T39 - Preparar documentacao, checklist final e entrega do sistema
+
+**Status**: Pendente
+
+**Objetivo**: documentar a configuracao, variaveis de ambiente, fluxo de uso e checklist final do AgroMassa para facilitar manutencao, deploy e futuras evolucoes, garantindo que o sistema esteja pronto para entrega sem alterar funcionalidades ja validadas.
+
+**Arquivos provaveis envolvidos**: `README.md`, `.env.example`, `docs/*`, `specs/04-tasks.md`, possivelmente arquivos de configuracao apenas se houver erro documentado e seguro para corrigir.
+
+**Passos de implementacao**:
+- antes de implementar, ler obrigatoriamente:
+  - `.codex/skills/tlc-spec-driven/SKILL.md`
+  - `.codex/skills/tlc-spec-driven/references/implement.md`
+  - `.codex/skills/tlc-spec-driven/references/coding-principles.md`
+  - `specs/01-ideia.md`
+  - `specs/02-spec.md`
+  - `specs/03-design.md`
+  - `specs/04-tasks.md`
+- revisar o estado atual do sistema apos as melhorias da Fase 14
+- criar ou atualizar documentacao de setup local
+- documentar variaveis de ambiente necessarias, sem valores reais
+- reforcar que `NEXT_PUBLIC_SUPABASE_URL` deve usar a URL base do projeto Supabase, sem `/rest/v1`
+- documentar configuracao do Supabase Storage e bucket de imagens
+- documentar como rodar seed, validacoes, build e servidor local
+- criar checklist manual final do MVP
+- documentar fluxo administrativo principal:
+  - login
+  - dashboard
+  - cadastro de produto
+  - upload de imagem
+  - publicacao
+  - acoes rapidas
+  - gerenciamento de imagens
+  - arquivamento/exclusao segura
+  - configuracoes institucionais
+- documentar fluxo publico principal:
+  - home
+  - catalogo
+  - filtros
+  - carregar mais
+  - detalhe do produto
+  - galeria
+  - WhatsApp
+- revisar `.env.example` para garantir que todas as variaveis necessarias estejam documentadas
+- nao colocar segredos, tokens, URLs sensiveis reais, senhas ou chaves privadas em arquivos versionados
+- nao alterar regras de negocio
+- nao alterar schema Prisma
+- nao criar migracao
+- nao alterar autenticacao, middleware/proxy, upload ou fluxos administrativos
+- corrigir apenas pequenos erros de documentacao/configuracao se forem claros e seguros
+- executar os gates `npx prisma validate`, `npm run typecheck`, `npm run lint` e `npm run build`
+
+**Criterios de conclusao**:
+- existe documentacao clara para rodar o projeto localmente
+- `.env.example` lista todas as variaveis necessarias sem valores reais
+- configuracao do Supabase Storage esta documentada
+- checklist final do MVP esta documentado
+- fluxo publico e fluxo administrativo estao descritos de forma objetiva
+- nao houve alteracao funcional fora de documentacao/configuracao segura
+- nenhum segredo foi exposto
+- todos os gates obrigatorios passam
+
+**Testes manuais necessarios**:
+- seguir a documentacao localmente em uma instalacao limpa ou revisao simulada
+- conferir se `.env.example` possui todas as variaveis usadas pelo sistema
+- rodar `npx prisma validate`
+- rodar `npm run typecheck`
+- rodar `npm run lint`
+- rodar `npm run build`
+- abrir `/`, `/produtos` e `/produtos/[slug]`
+- abrir `/admin/login`, fazer login e validar `/admin`
+- validar cadastro, edicao, upload, publicacao, acoes rapidas, imagens, exclusao/arquivamento e configuracoes institucionais
+- confirmar que nenhum arquivo versionado contem segredo real
+
+**Dependencias**: T38
 ## Sequenciamento resumido
 
 ```text
@@ -734,6 +1122,7 @@ T23 + T26 -> T29 -> T30
 T19 + T17 + T15 -> T31
 T28 + T30 + T31 -> T32
 T32 -> T33
+T33 -> T34 -> T35 -> T36 -> T37 -> T38 -> T39
 ```
 
 ---

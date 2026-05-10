@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState, useTransition } from "react";
 
+import { useToast } from "@/components/ui/toast-provider";
 import { saveSiteSettingsAction } from "@/features/institutional/admin-site-settings-actions";
 import {
   siteSettingsFormFieldErrors,
@@ -86,9 +87,9 @@ function TextArea({
 
 export function InstitutionalForm({ initialValues }: InstitutionalFormProps) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [errors, setErrors] = useState<SiteSettingsFormFieldErrors>({});
-  const [feedback, setFeedback] = useState<string | null>(null);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -101,7 +102,10 @@ export function InstitutionalForm({ initialValues }: InstitutionalFormProps) {
     setErrors(siteSettingsFormFieldErrors(result));
 
     if (!result.success) {
-      setFeedback(null);
+      showToast({
+        message: "Revise os campos obrigatorios antes de salvar as configuracoes.",
+        tone: "validation",
+      });
       return;
     }
 
@@ -110,12 +114,20 @@ export function InstitutionalForm({ initialValues }: InstitutionalFormProps) {
 
       if (!actionResult.ok) {
         setErrors(actionResult.fieldErrors ?? {});
-        setFeedback(actionResult.formError ?? null);
+        showToast({
+          message:
+            actionResult.formError ??
+            "Nao foi possivel concluir a acao. Tente novamente.",
+          tone: actionResult.fieldErrors ? "validation" : "error",
+        });
         return;
       }
 
       setErrors({});
-      setFeedback("Configuracoes institucionais salvas com sucesso.");
+      showToast({
+        message: "Configuracoes salvas com sucesso.",
+        tone: "success",
+      });
       router.refresh();
     });
   }
@@ -144,12 +156,6 @@ export function InstitutionalForm({ initialValues }: InstitutionalFormProps) {
             Voltar
           </Link>
         </div>
-
-        {feedback ? (
-          <div className="mt-5 rounded-lg border border-agromassa-green bg-[#effbe9] px-4 py-3 text-sm font-bold text-agromassa-forest">
-            {feedback}
-          </div>
-        ) : null}
       </section>
 
       <section className="rounded-lg border border-agromassa-border bg-white p-5 sm:p-6">

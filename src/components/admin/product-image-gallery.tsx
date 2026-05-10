@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 
+import { useToast } from "@/components/ui/toast-provider";
 import { setMainProductImageAction } from "@/features/products/admin-product-actions";
 
 export type ProductFormImage = {
@@ -34,12 +35,10 @@ export function ProductImageGallery({
   onMainImageChange,
   productId,
 }: ProductImageGalleryProps) {
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const { showToast } = useToast();
   const [isPending, startTransition] = useTransition();
 
   function handleSetMain(imageId: string) {
-    setFeedback(null);
-
     startTransition(async () => {
       const result = await setMainProductImageAction({
         imageId,
@@ -47,12 +46,20 @@ export function ProductImageGallery({
       });
 
       if (!result.ok) {
-        setFeedback(result.formError ?? "Nao foi possivel definir a imagem.");
+        showToast({
+          message:
+            result.formError ??
+            "Nao foi possivel concluir a acao. Tente novamente.",
+          tone: "error",
+        });
         return;
       }
 
       onMainImageChange(imageId);
-      setFeedback("Imagem principal atualizada.");
+      showToast({
+        message: "Imagem principal atualizada.",
+        tone: "success",
+      });
     });
   }
 
@@ -68,12 +75,6 @@ export function ProductImageGallery({
 
   return (
     <div className="grid gap-4">
-      {feedback ? (
-        <p className="rounded-md border border-agromassa-border bg-agromassa-cream px-3 py-2 text-sm font-bold text-agromassa-forest">
-          {feedback}
-        </p>
-      ) : null}
-
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {images.map((image) => {
           const isMain = image.id === mainImageId || image.isMain;

@@ -8,6 +8,7 @@ import {
   archiveProductAction,
   saveProductAction,
 } from "@/features/products/admin-product-actions";
+import { useToast } from "@/components/ui/toast-provider";
 import {
   PRODUCT_CATEGORY_LABELS,
   PRODUCT_CONDITION_LABELS,
@@ -179,11 +180,39 @@ function CheckboxInput({
   );
 }
 
+function getProductValidationMessage(
+  intent: AdminProductFormInput["intent"],
+) {
+  if (intent === "publish") {
+    return "Revise os campos obrigatorios para publicar o produto.";
+  }
+
+  return "Revise os campos obrigatorios para salvar o rascunho.";
+}
+
+function getProductSuccessMessage({
+  intent,
+  mode,
+}: {
+  intent: AdminProductFormInput["intent"];
+  mode: ProductFormProps["mode"];
+}) {
+  if (intent === "draft") {
+    return "Rascunho salvo com sucesso.";
+  }
+
+  if (mode === "create") {
+    return "Produto publicado com sucesso.";
+  }
+
+  return "Produto atualizado com sucesso.";
+}
+
 export function ProductForm({ initialValues, mode }: ProductFormProps) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [errors, setErrors] = useState<AdminProductFormFieldErrors>({});
-  const [feedback, setFeedback] = useState<string | null>(null);
   const [images, setImages] = useState<ProductFormImage[]>(initialValues.images);
   const [mainImageId, setMainImageId] = useState(initialValues.mainImageId);
 
@@ -222,7 +251,10 @@ export function ProductForm({ initialValues, mode }: ProductFormProps) {
     setErrors(adminProductFormFieldErrors(result));
 
     if (!result.success) {
-      setFeedback(null);
+      showToast({
+        message: getProductValidationMessage(intent),
+        tone: "validation",
+      });
       return;
     }
 
@@ -235,12 +267,20 @@ export function ProductForm({ initialValues, mode }: ProductFormProps) {
 
       if (!actionResult.ok) {
         setErrors(actionResult.fieldErrors ?? {});
-        setFeedback(actionResult.formError ?? null);
+        showToast({
+          message:
+            actionResult.formError ??
+            "Nao foi possivel concluir a acao. Tente novamente.",
+          tone: actionResult.fieldErrors ? "validation" : "error",
+        });
         return;
       }
 
       setErrors({});
-      setFeedback("Produto salvo com sucesso.");
+      showToast({
+        message: getProductSuccessMessage({ intent, mode }),
+        tone: "success",
+      });
 
       if (actionResult.redirectTo) {
         router.push(actionResult.redirectTo);
@@ -260,11 +300,19 @@ export function ProductForm({ initialValues, mode }: ProductFormProps) {
       const actionResult = await archiveProductAction(productId);
 
       if (!actionResult.ok) {
-        setFeedback(actionResult.formError ?? null);
+        showToast({
+          message:
+            actionResult.formError ??
+            "Nao foi possivel concluir a acao. Tente novamente.",
+          tone: "error",
+        });
         return;
       }
 
-      setFeedback("Produto arquivado com sucesso.");
+      showToast({
+        message: "Produto arquivado com sucesso.",
+        tone: "success",
+      });
       router.refresh();
     });
   }
@@ -289,12 +337,6 @@ export function ProductForm({ initialValues, mode }: ProductFormProps) {
             Voltar
           </Link>
         </div>
-
-        {feedback ? (
-          <div className="mt-5 rounded-lg border border-agromassa-green bg-[#effbe9] px-4 py-3 text-sm font-bold text-agromassa-forest">
-            {feedback}
-          </div>
-        ) : null}
       </section>
 
       <section className="rounded-lg border border-agromassa-border bg-white p-5 sm:p-6">
