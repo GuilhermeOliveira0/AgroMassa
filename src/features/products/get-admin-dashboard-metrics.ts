@@ -23,7 +23,7 @@ export async function getAdminDashboardMetrics(): Promise<AdminDashboardMetrics>
     archivedProducts,
     featuredProducts,
     productsMissingMainImage,
-  ] = await prisma.$transaction([
+  ] = await Promise.all([
     prisma.product.count(),
     prisma.product.count({
       where: {

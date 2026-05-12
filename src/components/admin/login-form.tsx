@@ -12,7 +12,7 @@ type LoginErrors = {
   form?: string;
 };
 
-const DEFAULT_CALLBACK_URL = "/";
+const DEFAULT_CALLBACK_URL = "/admin";
 
 type AdminLoginFormProps = {
   callbackUrl?: string;
@@ -23,8 +23,11 @@ export function AdminLoginForm({ callbackUrl }: AdminLoginFormProps) {
   const callbackPath = useMemo(() => {
     try {
       const parsedUrl = new URL(callbackUrl ?? DEFAULT_CALLBACK_URL, "http://localhost");
+      const normalizedPath = `${parsedUrl.pathname}${parsedUrl.search}${parsedUrl.hash}`;
 
-      return `${parsedUrl.pathname}${parsedUrl.search}${parsedUrl.hash}`;
+      return normalizedPath.startsWith("/admin")
+        ? normalizedPath
+        : DEFAULT_CALLBACK_URL;
     } catch {
       return DEFAULT_CALLBACK_URL;
     }

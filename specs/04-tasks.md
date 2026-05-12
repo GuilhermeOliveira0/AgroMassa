@@ -838,7 +838,7 @@
 
 ### T36 - Adicionar acoes rapidas com confirmacao na listagem de produtos
 
-**Status**: Pendente
+**Status**: Concluida
 
 **Objetivo**: permitir que o administrador execute acoes comuns diretamente na listagem de produtos, como alterar status, visibilidade, destaque e arquivamento/restauracao, usando confirmacoes e feedback visual para evitar operacoes silenciosas ou acidentais.
 
@@ -897,7 +897,7 @@
 
 ### T37 - Melhorar gerenciamento de imagens do produto
 
-**Status**: Pendente
+**Status**: Concluida
 
 **Objetivo**: melhorar a galeria administrativa de imagens do produto, permitindo excluir imagens, trocar imagem principal com clareza e orientar o administrador quando uma ação puder afetar a exibição pública do produto.
 
@@ -959,7 +959,7 @@
 
 ### T38 - Implementar exclusao segura de produto e revisao final das melhorias
 
-**Status**: Pendente
+**Status**: Concluida
 
 **Objetivo**: adicionar um fluxo seguro para exclusao de produto no painel administrativo, com confirmacao forte antes da acao, preservando a integridade de imagens, regras publicas e dados administrativos, e validar todo o sistema apos as melhorias de usabilidade.
 
@@ -1032,7 +1032,7 @@
 
 ### T39 - Preparar documentacao, checklist final e entrega do sistema
 
-**Status**: Pendente
+**Status**: Concluida
 
 **Objetivo**: documentar a configuracao, variaveis de ambiente, fluxo de uso e checklist final do AgroMassa para facilitar manutencao, deploy e futuras evolucoes, garantindo que o sistema esteja pronto para entrega sem alterar funcionalidades ja validadas.
 

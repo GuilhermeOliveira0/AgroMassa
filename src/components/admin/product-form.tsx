@@ -45,6 +45,8 @@ type ProductFormProps = {
   mode: "create" | "edit";
 };
 
+const REMOVE_PRODUCT_CONFIRMATION_TEXT = "ARQUIVAR";
+
 function FieldError({ message }: { message?: string }) {
   if (!message) {
     return null;
@@ -215,6 +217,8 @@ export function ProductForm({ initialValues, mode }: ProductFormProps) {
   const [errors, setErrors] = useState<AdminProductFormFieldErrors>({});
   const [images, setImages] = useState<ProductFormImage[]>(initialValues.images);
   const [mainImageId, setMainImageId] = useState(initialValues.mainImageId);
+  const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
+  const [removeConfirmationValue, setRemoveConfirmationValue] = useState("");
 
   function handleImageUploaded(image: ProductFormImage) {
     setImages((currentImages) => [image, ...currentImages]);
@@ -234,6 +238,31 @@ export function ProductForm({ initialValues, mode }: ProductFormProps) {
         isMain: image.id === imageId,
       })),
     );
+    router.refresh();
+  }
+
+  function handleImageDeleted({
+    nextMainImageId,
+    removedImageId,
+    removedWasMain,
+  }: {
+    nextMainImageId: string | null;
+    removedImageId: string;
+    removedWasMain: boolean;
+  }) {
+    setImages((currentImages) =>
+      currentImages
+        .filter((image) => image.id !== removedImageId)
+        .map((image) => ({
+          ...image,
+          isMain: nextMainImageId ? image.id === nextMainImageId : false,
+        })),
+    );
+
+    if (removedWasMain) {
+      setMainImageId(nextMainImageId ?? "");
+    }
+
     router.refresh();
   }
 
@@ -289,12 +318,15 @@ export function ProductForm({ initialValues, mode }: ProductFormProps) {
     });
   }
 
-  function handleArchive() {
+  function handleSafeRemove() {
     const productId = initialValues.id;
 
     if (!productId) {
       return;
     }
+
+    setIsRemoveDialogOpen(false);
+    setRemoveConfirmationValue("");
 
     startTransition(async () => {
       const actionResult = await archiveProductAction(productId);
@@ -310,9 +342,11 @@ export function ProductForm({ initialValues, mode }: ProductFormProps) {
       }
 
       showToast({
-        message: "Produto arquivado com sucesso.",
+        message:
+          "Produto removido com seguranca. Ele ficou arquivado e oculto do site.",
         tone: "success",
       });
+      router.push("/admin/produtos");
       router.refresh();
     });
   }
@@ -524,6 +558,7 @@ export function ProductForm({ initialValues, mode }: ProductFormProps) {
             <ProductImageGallery
               images={images}
               mainImageId={mainImageId}
+              onImageDeleted={handleImageDeleted}
               onMainImageChange={handleMainImageChange}
               productId={initialValues.id}
             />
@@ -556,13 +591,77 @@ export function ProductForm({ initialValues, mode }: ProductFormProps) {
           <button
             className="inline-flex min-h-11 items-center justify-center rounded-md border border-red-200 bg-white px-5 text-sm font-black text-red-700 transition hover:border-red-600"
             disabled={isPending || initialValues.isArchived}
-            onClick={handleArchive}
+            onClick={() => setIsRemoveDialogOpen(true)}
             type="button"
           >
-            {initialValues.isArchived ? "Produto arquivado" : "Arquivar produto"}
+            {initialValues.isArchived
+              ? "Produto ja removido"
+              : "Remover do sistema"}
           </button>
         ) : null}
       </div>
+
+      {initialValues.id && isRemoveDialogOpen ? (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/45 px-4">
+          <div className="w-full max-w-lg rounded-lg border border-agromassa-border bg-white p-5 shadow-xl">
+            <p className="text-sm font-black uppercase text-red-700">
+              Acao sensivel
+            </p>
+            <h3 className="mt-2 text-2xl font-black text-agromassa-ink">
+              Remover produto do site?
+            </h3>
+            <p className="mt-3 text-sm leading-6 text-agromassa-muted">
+              Esta remocao segue a regra segura do MVP: o produto sera{" "}
+              <span className="font-black text-agromassa-ink">arquivado</span>,
+              saindo do fluxo publico e permanecendo disponivel para restauracao
+              pela base administrativa.
+            </p>
+            <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-bold leading-5 text-amber-800">
+              As imagens vinculadas nao serao apagadas do storage nesta etapa.
+              Isso evita perda acidental e preserva a integridade do produto.
+            </p>
+            <label className="mt-5 grid gap-2">
+              <span className="text-xs font-black uppercase text-agromassa-muted">
+                Digite {REMOVE_PRODUCT_CONFIRMATION_TEXT} para confirmar
+              </span>
+              <input
+                className="min-h-11 rounded-md border border-agromassa-border px-3 text-sm font-bold text-agromassa-ink outline-none transition focus:border-red-600"
+                disabled={isPending}
+                onChange={(event) =>
+                  setRemoveConfirmationValue(event.target.value.toUpperCase())
+                }
+                placeholder={REMOVE_PRODUCT_CONFIRMATION_TEXT}
+                type="text"
+                value={removeConfirmationValue}
+              />
+            </label>
+            <div className="mt-5 flex flex-wrap justify-end gap-3">
+              <button
+                className="inline-flex min-h-10 items-center justify-center rounded-md border border-agromassa-border px-4 text-sm font-black text-agromassa-forest transition hover:border-agromassa-forest"
+                disabled={isPending}
+                onClick={() => {
+                  setIsRemoveDialogOpen(false);
+                  setRemoveConfirmationValue("");
+                }}
+                type="button"
+              >
+                Cancelar
+              </button>
+              <button
+                className="inline-flex min-h-10 items-center justify-center rounded-md bg-red-700 px-4 text-sm font-black text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-red-300"
+                disabled={
+                  isPending ||
+                  removeConfirmationValue !== REMOVE_PRODUCT_CONFIRMATION_TEXT
+                }
+                onClick={handleSafeRemove}
+                type="button"
+              >
+                Confirmar remocao segura
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </form>
   );
 }
