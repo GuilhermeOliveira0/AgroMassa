@@ -1104,6 +1104,2563 @@
 - confirmar que nenhum arquivo versionado contem segredo real
 
 **Dependencias**: T38
+
+## Fase 15. Otimizacao de performance, estabilidade e resposta visual
+
+- [ ] T40. Criar baseline de performance e validacao de seguranca
+
+  **Objetivo:**  
+  Registrar o estado atual do AgroMassa antes de qualquer otimizacao, garantindo que as proximas tasks sejam aplicadas com seguranca, sem quebrar funcionalidades existentes.
+
+  **Motivo:**  
+  Antes de alterar consultas, imagens, cache, componentes ou banco de dados, e necessario saber se o projeto ja esta compilando corretamente e quais telas apresentam lentidao ou delay. Essa task cria uma referencia inicial para comparar as melhorias das proximas tasks.
+
+  **Escopo permitido:**  
+  - Rodar validacoes do projeto.
+  - Testar manualmente as principais telas.
+  - Registrar problemas encontrados.
+  - Criar um arquivo simples de baseline/documentacao, se necessario.
+
+  **Escopo proibido:**  
+  - Nao otimizar codigo ainda.
+  - Nao alterar regra de negocio.
+  - Nao alterar schema Prisma.
+  - Nao criar migration.
+  - Nao alterar componentes visuais, exceto se for necessario apenas para corrigir erro impeditivo de build, e nesse caso documentar claramente.
+
+  **Arquivos provaveis:**  
+  - `specs/04-tasks.md`
+  - `specs/performance-baseline.md`, caso ainda nao exista
+
+  **Passos de implementacao:**
+
+  1. Verificar se o projeto instala e executa corretamente.
+
+     Rodar:
+
+     ```bash
+     npm install
+     ```
+
+     ou, se o ambiente estiver limpo e houver `package-lock.json` confiavel:
+
+     ```bash
+     npm ci
+     ```
+
+  2. Rodar as validacoes principais do projeto:
+
+     ```bash
+     npm run prisma:validate
+     npm run typecheck
+     npm run lint
+     npm run build
+     ```
+
+     Caso algum script nao exista no `package.json`, nao criar script novo nesta task. Apenas registrar no baseline qual comando nao existe.
+
+  3. Subir o projeto localmente:
+
+     ```bash
+     npm run dev
+     ```
+
+  4. Testar manualmente as seguintes rotas publicas:
+
+     ```txt
+     /
+     /produtos
+     /produtos?page=2
+     ```
+
+     Registrar:
+
+     - se a pagina abriu corretamente;
+     - se houve erro no console;
+     - se houve demora perceptivel;
+     - se imagens carregaram corretamente;
+     - se o botao de carregar mais funcionou;
+     - se busca/filtros continuaram funcionando, quando aplicavel.
+
+  5. Testar manualmente as seguintes rotas administrativas:
+
+     ```txt
+     /admin
+     /admin/produtos
+     ```
+
+     Registrar:
+
+     - tempo percebido de abertura;
+     - delay ao clicar em acoes rapidas;
+     - se a tabela carrega corretamente;
+     - se status, destaque, visibilidade e arquivamento funcionam;
+     - se ha refresh excessivo ou travamento apos clique.
+
+  6. Testar fluxo de produto, se o ambiente tiver dados e acesso admin:
+
+     ```txt
+     criar produto
+     editar produto
+     enviar imagem
+     definir imagem principal
+     publicar/despublicar produto
+     arquivar/restaurar produto
+     ```
+
+     Nao corrigir problemas nesta task, apenas registrar.
+
+  7. Criar ou atualizar o arquivo:
+
+     ```txt
+     specs/performance-baseline.md
+     ```
+
+     Com este formato:
+
+     ```md
+     # Baseline de performance - AgroMassa
+
+     Data da verificacao: YYYY-MM-DD
+
+     ## Ambiente
+
+     - Node:
+     - npm:
+     - Banco usado:
+     - Sistema operacional:
+     - Branch:
+
+     ## Validacoes automaticas
+
+     | Comando | Resultado | Observacoes |
+     | ------- | --------- | ----------- |
+     | npm run prisma:validate | pendente/aprovado/falhou | |
+     | npm run typecheck | pendente/aprovado/falhou | |
+     | npm run lint | pendente/aprovado/falhou | |
+     | npm run build | pendente/aprovado/falhou | |
+
+     ## Rotas publicas testadas
+
+     | Rota | Resultado | Observacoes |
+     | ---- | --------- | ----------- |
+     | / | | |
+     | /produtos | | |
+     | /produtos?page=2 | | |
+
+     ## Rotas admin testadas
+
+     | Rota | Resultado | Observacoes |
+     | ---- | --------- | ----------- |
+     | /admin | | |
+     | /admin/produtos | | |
+
+     ## Pontos de lentidao percebidos
+
+     - 
+
+     ## Erros encontrados no console
+
+     - 
+
+     ## Riscos antes das otimizacoes
+
+     - 
+
+     ## Observacoes para as proximas tasks
+
+     - 
+     ```
+
+  8. No final, marcar a task T40 como concluida somente se:
+
+     - o baseline foi criado ou atualizado;
+     - os comandos disponiveis foram executados;
+     - os erros encontrados foram registrados;
+     - nenhuma otimizacao fora do escopo foi feita.
+
+  **Criterios de aceite:**
+
+  - Existe um registro claro do estado atual do sistema antes das otimizacoes.
+  - As validacoes automaticas foram executadas ou tiveram ausencia registrada.
+  - As principais rotas publicas e administrativas foram verificadas.
+  - Problemas encontrados foram documentados sem tentar corrigir tudo nesta task.
+  - Nenhuma regra de negocio foi alterada.
+  - Nenhuma migration foi criada.
+  - Nenhuma otimizacao de performance foi implementada ainda.
+
+  **Validacoes obrigatorias:**
+
+  ```bash
+  npm run prisma:validate
+  npm run typecheck
+  npm run lint
+  npm run build
+
+- [ ] T41. Otimizar imagens dos produtos e URLs do Supabase
+
+  **Objetivo:**  
+  Melhorar o carregamento das imagens dos produtos e reduzir chamadas desnecessarias ao Supabase, deixando o catalogo publico e as listagens mais rapidas sem alterar a regra de negocio do sistema.
+
+  **Motivo:**  
+  Atualmente as imagens dos produtos podem estar sendo renderizadas de forma pouco otimizada, usando `background-image`, o que impede o Next.js de aplicar otimizacoes automaticas como lazy loading, formatos modernos e redimensionamento responsivo.  
+  Alem disso, se o sistema gerar uma URL assinada do Supabase para cada imagem exibida em listagens, cada carregamento de pagina pode fazer chamadas extras desnecessarias, aumentando o delay.
+
+  **Escopo permitido:**  
+  - Configurar otimizacao de imagens no `next.config.ts`.
+  - Trocar renderizacao de imagem publica de produto para `next/image`.
+  - Manter fallback visual para imagem padrao do AgroMassa.
+  - Revisar a funcao que gera URL de exibicao das imagens no Supabase.
+  - Evitar chamadas desnecessarias de `createSignedUrl` quando `publicUrl` ja for suficiente.
+  - Preservar compatibilidade com imagens existentes.
+
+  **Escopo proibido:**  
+  - Nao alterar fluxo de upload de imagem nesta task.
+  - Nao adicionar compressao com `sharp` nesta task.
+  - Nao alterar schema Prisma.
+  - Nao criar migration.
+  - Nao alterar regras de produto, publicacao, destaque ou arquivamento.
+  - Nao mexer na paginação do catalogo ainda.
+  - Nao alterar layout geral das paginas fora do necessario para adaptar o componente de imagem.
+
+  **Arquivos provaveis:**  
+  - `next.config.ts`
+  - `src/components/public/product-card-image.tsx`
+  - `src/components/public/product-card.tsx`
+  - `src/lib/storage/supabase-storage.ts`
+  - `src/features/products/public-list-products.ts`, somente se necessario
+  - `src/features/products/admin-list-products.ts`, somente se necessario
+
+  **Passos de implementacao:**
+
+  1. Revisar como as imagens de produtos sao exibidas atualmente.
+
+     Verificar principalmente:
+
+     ```txt
+     src/components/public/product-card-image.tsx
+     src/components/public/product-card.tsx
+     ```
+
+     Identificar se a imagem esta sendo renderizada com `backgroundImage`, `img` comum ou outro metodo.
+
+  2. Configurar `next.config.ts` para permitir imagens remotas do Supabase.
+
+     Usar `NEXT_PUBLIC_SUPABASE_URL` para extrair o hostname do Supabase, evitando deixar dominio fixo no codigo.
+
+     Exemplo esperado:
+
+     ```ts
+     import type { NextConfig } from "next";
+
+     const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
+       ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
+       : undefined;
+
+     const nextConfig: NextConfig = {
+       images: {
+         formats: ["image/avif", "image/webp"],
+         minimumCacheTTL: 60 * 60 * 24,
+         remotePatterns: supabaseHost
+           ? [
+               {
+                 protocol: "https",
+                 hostname: supabaseHost,
+                 pathname: "/storage/v1/object/**",
+               },
+             ]
+           : [],
+       },
+     };
+
+     export default nextConfig;
+     ```
+
+     Se o arquivo ja tiver configuracoes existentes, preservar todas elas e adicionar apenas a parte de `images`.
+
+  3. Trocar o componente publico de imagem do produto para usar `next/image`.
+
+     O componente deve:
+
+     - usar `Image` de `next/image`;
+     - manter `alt`;
+     - manter fallback para `/brand/agromassa1.jpeg`;
+     - usar `fill`, `sizes` e `object-cover`;
+     - preservar o efeito visual atual, se houver hover/scale;
+     - evitar quebrar cards existentes.
+
+     Exemplo de direcao:
+
+     ```tsx
+     import Image from "next/image";
+
+     type ProductCardImageProps = {
+       alt: string;
+       src: string | null | undefined;
+       priority?: boolean;
+       sizes?: string;
+     };
+
+     export function ProductCardImage({
+       alt,
+       src,
+       priority = false,
+       sizes = "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw",
+     }: ProductCardImageProps) {
+       return (
+         <Image
+           alt={alt}
+           className="object-cover transition duration-300 group-hover:scale-[1.03]"
+           fill
+           priority={priority}
+           sizes={sizes}
+           src={src || "/brand/agromassa1.jpeg"}
+         />
+       );
+     }
+     ```
+
+     O componente pai deve garantir que o wrapper da imagem tenha:
+
+     ```tsx
+     className="relative ..."
+     ```
+
+     porque `Image` com `fill` precisa de container relativo.
+
+  4. Revisar a funcao de URL de exibicao da imagem no Supabase.
+
+     Verificar:
+
+     ```txt
+     src/lib/storage/supabase-storage.ts
+     ```
+
+     Procurar a funcao responsavel por montar ou assinar URL de imagem, provavelmente algo semelhante a:
+
+     ```ts
+     getProductImageDisplayUrl()
+     ```
+
+     Se a imagem ja tiver `publicUrl` confiavel, evitar chamar `createSignedUrl` para cada item de listagem.
+
+     A direcao preferida e:
+
+     ```ts
+     export function getProductImageDisplayUrl({
+       publicUrl,
+     }: {
+       publicUrl: string;
+       storageKey: string;
+     }) {
+       return publicUrl;
+     }
+     ```
+
+     Porem, antes de aplicar, verificar se o projeto depende de bucket privado.
+
+  5. Se o bucket parecer privado ou se `publicUrl` nao for suficiente, nao remover a assinatura de forma arriscada.
+
+     Nesse caso, aplicar uma solucao segura:
+
+     - manter comportamento atual;
+     - documentar no final que a remocao de URL assinada depende de confirmar se o bucket e publico;
+     - nao quebrar exibicao das imagens.
+
+  6. Garantir que as imagens continuem aparecendo nestes lugares:
+
+     ```txt
+     /
+     /produtos
+     /produtos/[slug]
+     /admin/produtos
+     ```
+
+     Se a task alterar somente imagem publica, ainda assim verificar se o admin nao foi afetado.
+
+  7. Garantir que imagens ausentes continuem usando fallback:
+
+     ```txt
+     /brand/agromassa1.jpeg
+     ```
+
+  8. Rodar validacoes obrigatorias:
+
+     ```bash
+     npm run prisma:validate
+     npm run typecheck
+     npm run lint
+     npm run build
+     ```
+
+  9. Atualizar o checklist da T41 no `specs/04-tasks.md` somente depois que a task estiver concluida e validada.
+
+  **Criterios de aceite:**
+
+  - Imagens de produtos no catalogo publico usam `next/image`.
+  - O `next.config.ts` permite imagens remotas do Supabase sem hardcode desnecessario.
+  - O fallback `/brand/agromassa1.jpeg` continua funcionando.
+  - O layout dos cards de produto nao fica quebrado.
+  - A exibicao de imagens existentes continua funcionando.
+  - Chamadas desnecessarias ao Supabase para gerar URL assinada foram removidas quando for seguro.
+  - Se nao for seguro remover `createSignedUrl`, isso foi documentado claramente.
+  - Nenhuma regra de negocio de produto foi alterada.
+  - Nenhuma migration foi criada.
+  - O build final passa.
+
+  **Validacoes obrigatorias:**
+
+  ```bash
+  npm run prisma:validate
+  npm run typecheck
+  npm run lint
+  npm run build
+
+- [ ] T42. Otimizar carregamento do catalogo publico
+
+  **Objetivo:**  
+  Otimizar o carregamento da pagina publica de produtos, evitando que o catalogo busque cada vez mais registros no banco conforme o usuario clica em "Carregar mais", mantendo a experiencia atual do usuario e sem alterar regras de negocio.
+
+  **Motivo:**  
+  A listagem publica de produtos pode estar usando uma estrategia acumulativa baseada em `page * pageSize`. Isso faz com que paginas mais avancadas busquem muitos produtos de uma vez, mesmo quando o usuario so precisa carregar a proxima leva.  
+  Esse comportamento aumenta o tempo de resposta do banco, deixa o carregamento mais pesado e pode causar delay perceptivel no catalogo.
+
+  **Escopo permitido:**  
+  - Corrigir a consulta publica de produtos para usar paginacao real.
+  - Buscar somente a proxima pagina de produtos.
+  - Preservar o botao "Carregar mais".
+  - Preservar filtros e busca da pagina `/produtos`.
+  - Criar um endpoint publico seguro para carregar mais produtos, se necessario.
+  - Criar ou ajustar componente client apenas para anexar os novos produtos carregados.
+  - Manter ordenacao atual dos produtos.
+  - Manter regras atuais de visibilidade publica dos produtos.
+
+  **Escopo proibido:**  
+  - Nao alterar regras de publicacao de produto.
+  - Nao alterar regras de destaque.
+  - Nao alterar regras de arquivamento.
+  - Nao alterar schema Prisma.
+  - Nao criar migration.
+  - Nao mexer em listagem admin nesta task.
+  - Nao alterar upload de imagens.
+  - Nao alterar cache global ou `force-dynamic` nesta task.
+  - Nao remover filtros ou busca existentes.
+  - Nao trocar o layout geral do catalogo.
+
+  **Arquivos provaveis:**  
+  - `src/features/products/public-list-products.ts`
+  - `app/(public)/produtos/page.tsx`
+  - `src/components/public/load-more-button.tsx`
+  - `src/components/public/product-card.tsx`, somente se necessario
+  - `app/api/public/products/route.ts`, se for necessario criar endpoint para carregar mais produtos
+  - `src/components/public/public-products-list.tsx`, se for necessario criar componente client para anexar novos produtos
+
+  **Passos de implementacao:**
+
+  1. Revisar a implementacao atual da listagem publica.
+
+     Verificar principalmente:
+
+     ```txt
+     src/features/products/public-list-products.ts
+     app/(public)/produtos/page.tsx
+     src/components/public/load-more-button.tsx
+     ```
+
+     Procurar se existe logica parecida com:
+
+     ```ts
+     const visibleLimit = page * pageSize;
+     ```
+
+     ou:
+
+     ```ts
+     take: visibleLimit + 1
+     ```
+
+  2. Substituir a estrategia acumulativa por paginacao real.
+
+     A funcao de listagem deve buscar somente a pagina solicitada.
+
+     Direcao esperada:
+
+     ```ts
+     const page = Math.max(filters.page, 1);
+     const skip = (page - 1) * pageSize;
+
+     const products = await prisma.product.findMany({
+       where: buildPublicProductWhere(filters),
+       orderBy: [
+         { isFeatured: "desc" },
+         { createdAt: "desc" },
+         { id: "desc" },
+       ],
+       select: publicProductListSelect,
+       skip,
+       take: pageSize + 1,
+     });
+     ```
+
+     O retorno deve continuar informando:
+
+     ```ts
+     {
+       products,
+       page,
+       pageSize,
+       hasMore,
+       nextPage
+     }
+     ```
+
+     Onde:
+
+     ```ts
+     hasMore = products.length > pageSize;
+     nextPage = hasMore ? page + 1 : null;
+     ```
+
+  3. Preservar o comportamento visual do botao "Carregar mais".
+
+     O usuario nao deve sentir que a pagina "troca" ou perde produtos ja carregados.
+
+     A solucao preferida e:
+
+     - renderizar a primeira pagina no servidor;
+     - transformar o carregamento adicional em comportamento client;
+     - ao clicar em "Carregar mais", buscar somente a proxima pagina;
+     - anexar os novos produtos a lista existente;
+     - atualizar estado de carregamento do botao;
+     - esconder o botao quando `hasMore` for falso.
+
+  4. Se for necessario criar endpoint publico, criar um endpoint limitado e seguro.
+
+     Caminho sugerido:
+
+     ```txt
+     app/api/public/products/route.ts
+     ```
+
+     Esse endpoint deve:
+
+     - aceitar os mesmos filtros publicos da pagina `/produtos`;
+     - aceitar `page`;
+     - limitar `pageSize` internamente;
+     - nunca retornar produtos que nao estejam publicamente visiveis;
+     - reutilizar a funcao de listagem publica existente;
+     - retornar JSON somente com os dados necessarios para os cards.
+
+     Exemplo de comportamento esperado:
+
+     ```txt
+     GET /api/public/products?page=2&q=tomate&category=...
+     ```
+
+  5. Se for criado componente client para a lista, manter a menor area client possivel.
+
+     Exemplo de separacao esperada:
+
+     ```txt
+     app/(public)/produtos/page.tsx              -> server component
+     src/components/public/public-products-list.tsx -> client component pequeno
+     src/components/public/product-card.tsx      -> manter como esta, se possivel
+     ```
+
+     O componente client deve cuidar apenas de:
+
+     - armazenar produtos carregados;
+     - chamar o endpoint;
+     - anexar novos produtos;
+     - controlar loading;
+     - controlar erro simples;
+     - controlar `hasMore` e `nextPage`.
+
+  6. Preservar filtros e busca.
+
+     Ao clicar em "Carregar mais", a requisicao deve manter os parametros atuais da URL, como:
+
+     ```txt
+     q
+     category
+     cidade
+     status
+     page
+     ```
+
+     Usar somente os parametros que realmente existirem no projeto.  
+     Nao inventar filtro novo nesta task.
+
+  7. Garantir que a ordenacao continue consistente.
+
+     A ordenacao deve permanecer equivalente a atual, por exemplo:
+
+     ```ts
+     orderBy: [
+       { isFeatured: "desc" },
+       { createdAt: "desc" },
+       { id: "desc" },
+     ]
+     ```
+
+     O `id` no final ajuda a manter ordenacao estavel quando datas forem iguais.
+
+  8. Garantir que a primeira renderizacao da pagina continue funcionando sem JavaScript.
+
+     A pagina `/produtos` deve continuar exibindo a primeira leva de produtos mesmo antes de qualquer clique em "Carregar mais".
+
+  9. Tratar estados basicos do botao.
+
+     O botao deve ter comportamento seguro:
+
+     - desabilitado durante carregamento;
+     - texto de carregamento enquanto busca;
+     - mensagem simples se falhar;
+     - nao duplicar produtos se o usuario clicar varias vezes;
+     - nao buscar pagina inexistente se `hasMore` for falso.
+
+  10. Rodar validacoes obrigatorias:
+
+      ```bash
+      npm run prisma:validate
+      npm run typecheck
+      npm run lint
+      npm run build
+      ```
+
+  11. Atualizar o checklist da T42 no `specs/04-tasks.md` somente depois que a task estiver concluida e validada.
+
+  **Criterios de aceite:**
+
+  - A listagem publica nao usa mais `page * pageSize` para buscar resultados acumulados no banco.
+  - A consulta publica usa `skip` e `take` ou estrategia equivalente de paginacao real.
+  - A primeira pagina de `/produtos` continua carregando corretamente.
+  - O botao "Carregar mais" continua funcionando.
+  - Ao clicar em "Carregar mais", os produtos ja exibidos permanecem na tela.
+  - A proxima pagina carrega somente os novos produtos.
+  - Filtros e busca existentes continuam funcionando.
+  - Produtos nao publicos, arquivados ou em rascunho nao aparecem no catalogo.
+  - Nao ha produtos duplicados ao carregar mais.
+  - O layout visual do catalogo nao foi refeito sem necessidade.
+  - Nenhuma regra de negocio foi alterada.
+  - Nenhuma migration foi criada.
+  - O build final passa.
+
+  **Validacoes obrigatorias:**
+
+  ```bash
+  npm run prisma:validate
+  npm run typecheck
+  npm run lint
+  npm run build
+
+
+
+- [ ] T43. Criar paginacao real na listagem admin de produtos
+
+  **Objetivo:**  
+  Otimizar a pagina `/admin/produtos`, evitando que o admin carregue todos os produtos de uma vez. A listagem deve passar a usar paginacao real no banco, mantendo busca, tabela, acoes rapidas e comportamento administrativo existentes.
+
+  **Motivo:**  
+  A listagem administrativa de produtos tende a ficar lenta conforme a quantidade de produtos cresce. Se o sistema usa `findMany()` sem `take` e `skip`, todos os produtos sao carregados de uma vez, enviados para a pagina e hidratados no navegador.  
+  Isso aumenta o tempo de carregamento, deixa a tabela pesada e pode causar delay nas interacoes.
+
+  **Escopo permitido:**  
+  - Adicionar paginacao real no servico de listagem admin.
+  - Usar `skip` e `take` no Prisma.
+  - Retornar metadados de paginacao, como `total`, `page`, `pageSize` e `totalPages`.
+  - Preservar busca existente por `q`, se houver.
+  - Atualizar a pagina `/admin/produtos` para ler `page` pela URL.
+  - Criar componente simples de paginacao admin, se necessario.
+  - Preservar a tabela atual e suas acoes.
+  - Preservar ordenacao atual da listagem.
+  - Preservar filtros existentes, caso existam.
+
+  **Escopo proibido:**  
+  - Nao alterar regras de cadastro de produto.
+  - Nao alterar regras de edicao de produto.
+  - Nao alterar regras de publicacao, destaque, visibilidade ou arquivamento.
+  - Nao alterar upload de imagens.
+  - Nao alterar schema Prisma.
+  - Nao criar migration.
+  - Nao mexer no catalogo publico nesta task.
+  - Nao remover `router.refresh()` das acoes rapidas nesta task.
+  - Nao dividir a tabela em Server Component e Client Component nesta task.
+  - Nao alterar cache ou `force-dynamic` nesta task.
+  - Nao refatorar layout geral do admin sem necessidade.
+
+  **Arquivos provaveis:**  
+  - `src/features/products/admin-list-products.ts`
+  - `app/admin/(protected)/produtos/page.tsx`
+  - `src/components/admin/products-table.tsx`, somente se necessario para adaptar props
+  - `src/components/admin/admin-pagination.tsx`, se for necessario criar componente de paginacao
+  - `src/components/admin/products-search.tsx`, somente se existir e for necessario preservar `q`
+
+  **Passos de implementacao:**
+
+  1. Revisar a implementacao atual da listagem admin.
+
+     Verificar principalmente:
+
+     ```txt
+     src/features/products/admin-list-products.ts
+     app/admin/(protected)/produtos/page.tsx
+     src/components/admin/products-table.tsx
+     ```
+
+     Procurar se o servico admin usa `findMany()` sem:
+
+     ```ts
+     skip
+     take
+     ```
+
+     Confirmar tambem se existe busca por `q`, filtro de status ou algum parametro ja usado na URL.
+
+  2. Alterar o servico `adminListProducts` para receber parametros de paginacao.
+
+     A funcao deve aceitar, no minimo:
+
+     ```ts
+     {
+       page?: number;
+       pageSize?: number;
+       q?: string;
+     }
+     ```
+
+     Usar nomes reais do projeto se ja existir um tipo definido.
+
+     Definir um tamanho padrao seguro:
+
+     ```ts
+     const ADMIN_PRODUCTS_PAGE_SIZE = 20;
+     ```
+
+     Limitar `pageSize` para evitar abuso ou carregamento excessivo.
+
+     Exemplo de direcao:
+
+     ```ts
+     const page = Math.max(filters.page ?? 1, 1);
+     const pageSize = Math.min(
+       Math.max(filters.pageSize ?? ADMIN_PRODUCTS_PAGE_SIZE, 1),
+       50,
+     );
+
+     const skip = (page - 1) * pageSize;
+     ```
+
+  3. Preservar a busca existente.
+
+     Se a listagem admin ja usa `q`, manter a mesma regra de busca.
+
+     Se o projeto usa campo normalizado como:
+
+     ```txt
+     searchTextNormalized
+     ```
+
+     continuar usando esse campo, sem trocar a regra de busca por outra diferente.
+
+     Nao inventar filtros novos nesta task.
+
+  4. Usar `count` e `findMany` com o mesmo `where`.
+
+     O servico deve retornar a quantidade total de produtos que correspondem aos filtros atuais.
+
+     Direcao esperada:
+
+     ```ts
+     const [total, products] = await prisma.$transaction([
+       prisma.product.count({ where }),
+       prisma.product.findMany({
+         where,
+         orderBy: [
+           { updatedAt: "desc" },
+           { createdAt: "desc" },
+           { id: "desc" },
+         ],
+         select: adminProductListSelect,
+         skip,
+         take: pageSize,
+       }),
+     ]);
+     ```
+
+     Se a ordenacao atual for diferente, preservar a ordenacao atual e apenas adicionar `id` como ultimo criterio se isso for seguro.
+
+  5. Retornar metadados de paginacao.
+
+     O retorno deve ter formato semelhante a:
+
+     ```ts
+     return {
+       products,
+       total,
+       page,
+       pageSize,
+       totalPages: Math.max(Math.ceil(total / pageSize), 1),
+     };
+     ```
+
+     Se nao houver produtos, o retorno deve ser seguro e nao quebrar a tela.
+
+  6. Atualizar `/admin/produtos` para ler `page` da URL.
+
+     A pagina deve aceitar parametro:
+
+     ```txt
+     ?page=1
+     ```
+
+     E preservar busca existente:
+
+     ```txt
+     ?q=texto&page=2
+     ```
+
+     Regras:
+
+     - se `page` nao existir, usar `1`;
+     - se `page` for invalido, usar `1`;
+     - se `q` existir, manter na navegacao de paginas;
+     - nao perder filtros existentes ao clicar em anterior/proxima.
+
+  7. Criar paginacao simples, se o projeto ainda nao tiver componente para isso.
+
+     Caminho sugerido:
+
+     ```txt
+     src/components/admin/admin-pagination.tsx
+     ```
+
+     O componente deve ser simples e seguro:
+
+     - usar `Link` do Next.js;
+     - receber `page`, `totalPages`, `total`, `pageSize` e parametros atuais;
+     - exibir pagina atual;
+     - ter botao/link "Anterior";
+     - ter botao/link "Proxima";
+     - desabilitar ou ocultar "Anterior" na primeira pagina;
+     - desabilitar ou ocultar "Proxima" na ultima pagina;
+     - preservar `q` e demais parametros existentes.
+
+     Nao criar paginacao complexa com muitas paginas nesta task, a menos que seja muito simples e seguro.
+
+  8. Atualizar a tabela somente se necessario.
+
+     Se `ProductsTable` espera apenas `products`, manter assim.
+
+     Se for necessario exibir total ou estado vazio, fazer a menor alteracao possivel.
+
+     Nao mover logica de acoes rapidas nesta task.
+
+     Nao alterar comportamento de:
+
+     ```txt
+     status
+     destaque
+     visibilidade publica
+     arquivar
+     restaurar
+     excluir
+     editar
+     ```
+
+  9. Garantir estado vazio seguro.
+
+     Se a busca nao retornar produtos, a tela deve continuar mostrando mensagem adequada de vazio.
+
+     Se a pagina atual nao tiver produtos por causa de parametro alto demais, nao quebrar. Pode mostrar estado vazio ou orientar o usuario a voltar para a primeira pagina.
+
+  10. Garantir que a busca continue funcionando com paginacao.
+
+      Testar cenarios:
+
+      ```txt
+      /admin/produtos?q=abc
+      /admin/produtos?q=abc&page=2
+      ```
+
+      Ao trocar busca, a pagina deve preferencialmente voltar para `page=1`, se o componente de busca permitir isso com seguranca.
+
+  11. Rodar validacoes obrigatorias:
+
+      ```bash
+      npm run prisma:validate
+      npm run typecheck
+      npm run lint
+      npm run build
+      ```
+
+  12. Atualizar o checklist da T43 no `specs/04-tasks.md` somente depois que a task estiver concluida e validada.
+
+  **Criterios de aceite:**
+
+  - A listagem admin nao carrega mais todos os produtos de uma vez.
+  - O servico admin usa `skip` e `take` ou estrategia equivalente de paginacao real.
+  - O servico retorna `products`, `total`, `page`, `pageSize` e `totalPages`, ou estrutura equivalente.
+  - A pagina `/admin/produtos` aceita `page` pela URL.
+  - A navegacao anterior/proxima funciona.
+  - A busca existente por `q` continua funcionando.
+  - A paginacao preserva a busca e filtros existentes.
+  - A tabela de produtos continua exibindo os dados corretamente.
+  - As acoes rapidas existentes continuam funcionando como antes.
+  - Nenhuma regra de negocio de produto foi alterada.
+  - Nenhuma migration foi criada.
+  - O build final passa.
+
+  **Validacoes obrigatorias:**
+
+  ```bash
+  npm run prisma:validate
+  npm run typecheck
+  npm run lint
+  npm run build
+
+  - [ ] T44. Reduzir delay das acoes rapidas do admin
+
+  **Objetivo:**  
+  Reduzir o delay percebido ao clicar nas acoes rapidas da tabela administrativa de produtos, mantendo o comportamento atual, a seguranca das operacoes e a consistencia visual da interface.
+
+  **Motivo:**  
+  A tabela administrativa pode estar hidratando mais JavaScript do que o necessario e algumas acoes podem estar chamando `router.refresh()` de forma excessiva. Isso pode causar sensacao de travamento, delay apos clique ou recarregamento desnecessario da pagina inteira.  
+  Esta task deve deixar as acoes mais responsivas, sem alterar regras de negocio.
+
+  **Escopo permitido:**  
+  - Melhorar a resposta visual das acoes rapidas do admin.
+  - Manter atualizacao otimista quando ela ja existir ou for segura.
+  - Reduzir ou remover `router.refresh()` apenas quando nao for necessario.
+  - Manter rollback em caso de erro.
+  - Separar partes estaticas da tabela de partes interativas, se isso puder ser feito com seguranca.
+  - Criar componente client pequeno apenas para controles interativos.
+  - Manter toasts de sucesso e erro.
+  - Preservar acessibilidade basica dos botoes e selects.
+
+  **Escopo proibido:**  
+  - Nao alterar regras de negocio dos produtos.
+  - Nao alterar regras de publicacao.
+  - Nao alterar regras de destaque.
+  - Nao alterar regras de visibilidade publica.
+  - Nao alterar regras de arquivamento ou restauracao.
+  - Nao alterar upload de imagens.
+  - Nao alterar schema Prisma.
+  - Nao criar migration.
+  - Nao mexer no catalogo publico nesta task.
+  - Nao mexer em cache publico ou `force-dynamic` nesta task.
+  - Nao refatorar todo o admin sem necessidade.
+  - Nao alterar a paginacao criada na T43, exceto se for necessario apenas para preservar funcionamento.
+
+  **Arquivos provaveis:**  
+  - `src/components/admin/products-table.tsx`
+  - `src/components/admin/product-quick-action-controls.tsx`, se for criado novo componente
+  - `src/features/products/actions.ts`, somente se necessario entender retornos das actions
+  - `app/admin/(protected)/produtos/page.tsx`, somente se necessario ajustar import ou props
+
+  **Passos de implementacao:**
+
+  1. Revisar a tabela administrativa atual.
+
+     Verificar principalmente:
+
+     ```txt
+     src/components/admin/products-table.tsx
+     ```
+
+     Identificar:
+
+     - se o arquivo inteiro esta marcado com `"use client"`;
+     - quais partes realmente precisam ser client;
+     - quais botoes ou controles chamam server actions;
+     - onde existe `router.refresh()`;
+     - se ja existe atualizacao otimista;
+     - se existe rollback quando a action falha.
+
+  2. Mapear as acoes rapidas existentes.
+
+     Antes de alterar, listar mentalmente ou em comentario temporario removido depois quais acoes existem, por exemplo:
+
+     ```txt
+     alterar status
+     destacar/remover destaque
+     publicar/despublicar
+     arquivar/restaurar
+     excluir
+     editar
+     ```
+
+     Usar apenas as acoes que realmente existem no projeto.
+
+  3. Preservar o contrato atual das server actions.
+
+     Verificar retornos das actions em:
+
+     ```txt
+     src/features/products/actions.ts
+     ```
+
+     Nao alterar a regra interna das actions nesta task.
+
+     So ajustar chamada no componente se for necessario para melhorar estado visual, loading ou rollback.
+
+  4. Reduzir a area client da tabela somente se for seguro.
+
+     Se `products-table.tsx` inteiro estiver como `"use client"`, avaliar separar em:
+
+     ```txt
+     src/components/admin/products-table.tsx
+     src/components/admin/product-quick-action-controls.tsx
+     ```
+
+     Direcao desejada:
+
+     - `products-table.tsx` deve ser Server Component, se possivel;
+     - `product-quick-action-controls.tsx` deve ser Client Component;
+     - apenas botoes, selects e estados interativos ficam no client;
+     - textos, badges, linhas e estrutura visual podem ficar no server.
+
+     Se a separacao ficar arriscada demais, nao forcar. Nesse caso, manter a tabela client e otimizar apenas estados, loading e `router.refresh()`.
+
+  5. Melhorar estado de carregamento por acao.
+
+     Cada acao rapida deve evitar cliques duplicados enquanto estiver em andamento.
+
+     Comportamento esperado:
+
+     - botao ou controle fica desabilitado durante a acao;
+     - usuario recebe feedback visual simples;
+     - se a acao concluir, estado visual fica atualizado;
+     - se a acao falhar, estado anterior volta;
+     - toast de erro aparece quando aplicavel.
+
+  6. Remover `router.refresh()` apenas quando for seguro.
+
+     Regra de cuidado:
+
+     - se a acao apenas muda um campo visivel do produto atual, como destaque, status ou visibilidade, preferir atualizacao local sem refresh;
+     - se a acao remove o item da lista atual, como arquivar, restaurar ou excluir, avaliar se ainda precisa refresh ou se pode remover localmente;
+     - se houver duvida, manter `router.refresh()` naquela acao especifica para nao quebrar consistencia.
+
+     Nao remover todos os `router.refresh()` cegamente.
+
+  7. Manter atualizacao otimista com rollback.
+
+     Exemplo de direcao:
+
+     ```tsx
+     const previousState = currentState;
+
+     setCurrentState(nextState);
+
+     try {
+       const result = await action(...);
+
+       if (!result?.ok) {
+         setCurrentState(previousState);
+         showError(...);
+       }
+     } catch (error) {
+       setCurrentState(previousState);
+       showError(...);
+     }
+     ```
+
+     Adaptar ao padrao real do projeto.
+
+  8. Evitar refresh total em acoes pequenas.
+
+     Para acoes como:
+
+     ```txt
+     destacar/remover destaque
+     alterar visibilidade publica
+     alterar status simples
+     ```
+
+     a UI deve responder localmente quando possivel.
+
+     O objetivo e que o clique pareca instantaneo, sem travar a pagina inteira.
+
+  9. Preservar comportamento de paginacao da T43.
+
+     Confirmar que, depois das alteracoes:
+
+     ```txt
+     /admin/produtos?page=1
+     /admin/produtos?page=2
+     /admin/produtos?q=abc&page=1
+     ```
+
+     continuam funcionando.
+
+  10. Preservar toasts existentes.
+
+      Se o projeto ja usa `useToast`, manter o mesmo padrao.
+
+      Nao criar outro sistema de toast.
+
+      Nao mover `ToastProvider` nesta task, pois isso sera tratado em task propria.
+
+  11. Garantir que a UI nao fique inconsistente apos erro.
+
+      Testar ou revisar:
+
+      - erro de action;
+      - action retornando falha;
+      - clique duplo rapido;
+      - troca de status e falha;
+      - arquivar/restaurar e falha.
+
+      A interface nao deve mostrar sucesso se a action falhou.
+
+  12. Rodar validacoes obrigatorias:
+
+      ```bash
+      npm run prisma:validate
+      npm run typecheck
+      npm run lint
+      npm run build
+      ```
+
+  13. Atualizar o checklist da T44 no `specs/04-tasks.md` somente depois que a task estiver concluida e validada.
+
+  **Criterios de aceite:**
+
+  - As acoes rapidas do admin continuam funcionando.
+  - Cliques em status, destaque, visibilidade ou acoes semelhantes respondem mais rapido visualmente.
+  - Botoes ou controles ficam protegidos contra clique duplicado durante carregamento.
+  - `router.refresh()` foi removido apenas das acoes em que isso era seguro.
+  - Acoes que precisam de consistencia total continuam podendo usar refresh.
+  - Erros fazem rollback do estado visual quando aplicavel.
+  - Toasts de sucesso e erro continuam funcionando.
+  - A tabela admin continua exibindo produtos corretamente.
+  - A paginacao da T43 continua funcionando.
+  - Busca e filtros existentes continuam funcionando.
+  - Nenhuma regra de negocio foi alterada.
+  - Nenhuma migration foi criada.
+  - O build final passa.
+
+  **Validacoes obrigatorias:**
+
+  ```bash
+  npm run prisma:validate
+  npm run typecheck
+  npm run lint
+  npm run build
+
+
+- [ ] T45. Aplicar cache publico seguro e reduzir JavaScript desnecessario
+
+  **Objetivo:**  
+  Deixar as paginas publicas do AgroMassa mais leves e rapidas, removendo renderizacao dinamica desnecessaria e evitando que JavaScript administrativo seja carregado no site publico.
+
+  **Motivo:**  
+  Algumas paginas publicas podem estar usando `force-dynamic`, fazendo o Next.js renderizar tudo novamente a cada requisicao. Isso aumenta tempo de resposta em paginas como home, catalogo e detalhe de produto.  
+  Alem disso, se providers usados somente no admin estiverem no layout global, o site publico pode carregar JavaScript desnecessario, piorando a performance percebida.
+
+  **Escopo permitido:**  
+  - Revisar paginas publicas que usam `dynamic = "force-dynamic"`.
+  - Substituir renderizacao dinamica por cache/revalidacao segura quando possivel.
+  - Usar `revalidate` em paginas publicas que podem aceitar cache curto.
+  - Manter paginas administrativas sempre dinamicas.
+  - Mover `ToastProvider` do layout global para o layout admin, se ele for usado apenas no admin.
+  - Preservar funcionamento dos toasts administrativos.
+  - Preservar funcionamento da home, catalogo e detalhe de produto.
+  - Documentar qualquer pagina que precise continuar dinamica.
+
+  **Escopo proibido:**  
+  - Nao alterar regras de produto.
+  - Nao alterar regras de publicacao, destaque, visibilidade ou arquivamento.
+  - Nao alterar listagem admin.
+  - Nao alterar paginacao do catalogo.
+  - Nao alterar upload de imagens.
+  - Nao alterar schema Prisma.
+  - Nao criar migration.
+  - Nao mexer em server actions de produto.
+  - Nao aplicar cache em paginas admin.
+  - Nao aplicar cache em rotas que dependem de sessao, autenticacao ou dados sensiveis.
+  - Nao remover providers sem confirmar onde sao usados.
+
+  **Arquivos provaveis:**  
+  - `app/layout.tsx`
+  - `app/admin/(protected)/layout.tsx`
+  - `app/(public)/page.tsx`
+  - `app/(public)/produtos/page.tsx`
+  - `app/(public)/produtos/[slug]/page.tsx`
+  - `src/components/providers/toast-provider.tsx`, somente para verificar uso
+  - `src/components/ui/toast.tsx`, somente para verificar uso
+  - `src/features/institutional/get-site-settings.ts`, se necessario revisar cache de dados institucionais
+  - `src/features/products/public-list-products.ts`, somente se necessario revisar compatibilidade com cache
+  - `src/features/products/public-get-product.ts`, somente se existir e for necessario revisar detalhe publico
+
+  **Passos de implementacao:**
+
+  1. Revisar layouts e providers globais.
+
+     Verificar:
+
+     ```txt
+     app/layout.tsx
+     app/admin/(protected)/layout.tsx
+     ```
+
+     Identificar se o `ToastProvider` ou outro provider client esta envolvendo o app inteiro sem necessidade.
+
+  2. Confirmar onde `useToast` ou componentes de toast sao usados.
+
+     Procurar no projeto por:
+
+     ```txt
+     useToast
+     ToastProvider
+     toast
+     ```
+
+     Se os toasts forem usados somente no admin, mover o `ToastProvider` para o layout admin.
+
+     Se houver uso real no site publico, nao remover do layout global sem criar alternativa segura.
+
+  3. Mover `ToastProvider` com seguranca, se aplicavel.
+
+     Se o provider estiver em:
+
+     ```tsx
+     app/layout.tsx
+     ```
+
+     E for usado apenas no admin, remover do layout global e adicionar em:
+
+     ```txt
+     app/admin/(protected)/layout.tsx
+     ```
+
+     Direcao esperada:
+
+     ```tsx
+     <ToastProvider>
+       <AdminHeader ... />
+       {children}
+     </ToastProvider>
+     ```
+
+     Preservar a estrutura real do layout admin.  
+     Nao alterar autenticacao, sessao, protecao de rota ou header admin.
+
+  4. Revisar paginas publicas com renderizacao dinamica forcada.
+
+     Verificar arquivos como:
+
+     ```txt
+     app/(public)/page.tsx
+     app/(public)/produtos/page.tsx
+     app/(public)/produtos/[slug]/page.tsx
+     ```
+
+     Procurar por:
+
+     ```ts
+     export const dynamic = "force-dynamic";
+     ```
+
+  5. Remover `force-dynamic` apenas onde for seguro.
+
+     Regra de seguranca:
+
+     - paginas publicas sem dados de sessao podem usar cache;
+     - paginas publicas com dados institucionais podem usar `revalidate`;
+     - paginas publicas de catalogo podem usar revalidacao curta;
+     - paginas admin nao devem receber cache;
+     - paginas que dependem de autenticacao nao devem ser alteradas.
+
+     Se houver duvida em uma pagina especifica, manter dinamica e documentar o motivo.
+
+  6. Aplicar `revalidate` em paginas publicas adequadas.
+
+     Direcao esperada:
+
+     ```ts
+     export const revalidate = 60;
+     ```
+
+     Usar valor curto e seguro inicialmente, como 60 segundos.
+
+     O objetivo e melhorar performance sem deixar o conteudo publico desatualizado por muito tempo.
+
+  7. Garantir compatibilidade com filtros do catalogo.
+
+     Se `/produtos` usa `searchParams`, garantir que cache/revalidacao nao quebre:
+
+     ```txt
+     /produtos
+     /produtos?q=...
+     /produtos?page=...
+     ```
+
+     O uso de `revalidate` nao deve fazer filtros mostrarem resultados errados.
+
+  8. Garantir que detalhe de produto continue correto.
+
+     Em:
+
+     ```txt
+     /produtos/[slug]
+     ```
+
+     confirmar que:
+
+     - produto publicado continua abrindo;
+     - produto inexistente continua retornando 404 ou comportamento atual;
+     - produto nao publico nao aparece indevidamente;
+     - metadata, se existir, continua funcionando.
+
+  9. Nao aplicar cache no admin.
+
+     Confirmar que arquivos em:
+
+     ```txt
+     app/admin
+     ```
+
+     continuam dinamicos, principalmente rotas protegidas.
+
+     Nao adicionar `revalidate` em paginas admin nesta task.
+
+  10. Rodar validacoes obrigatorias:
+
+      ```bash
+      npm run prisma:validate
+      npm run typecheck
+      npm run lint
+      npm run build
+      ```
+
+  11. Atualizar o checklist da T45 no `specs/04-tasks.md` somente depois que a task estiver concluida e validada.
+
+  **Criterios de aceite:**
+
+  - O `ToastProvider` nao fica mais no layout global se for usado apenas no admin.
+  - Os toasts do admin continuam funcionando.
+  - Paginas publicas seguras deixam de usar `force-dynamic`.
+  - Paginas publicas adequadas usam `revalidate` ou estrategia equivalente de cache seguro.
+  - Paginas admin continuam sem cache publico.
+  - Home publica continua carregando corretamente.
+  - Catalogo publico continua carregando corretamente.
+  - Filtros e busca do catalogo continuam funcionando.
+  - Detalhe de produto continua funcionando.
+  - Produto nao publico continua protegido contra exibicao indevida.
+  - Nenhuma regra de negocio foi alterada.
+  - Nenhuma migration foi criada.
+  - O build final passa.
+
+  **Validacoes obrigatorias:**
+
+  ```bash
+  npm run prisma:validate
+  npm run typecheck
+  npm run lint
+  npm run build
+
+
+  - [ ] T46. Otimizar banco, metricas do dashboard e versoes do projeto
+
+  **Objetivo:**  
+  Melhorar a performance das consultas principais do AgroMassa, otimizar as metricas do dashboard administrativo e estabilizar as versoes das dependencias do projeto para evitar que futuras instalacoes quebrem comportamento, build ou performance.
+
+  **Motivo:**  
+  Mesmo com melhorias no frontend, o sistema ainda pode ficar lento se o banco nao tiver indices adequados para listagens publicas, listagens admin e imagens de produtos.  
+  Alem disso, o dashboard pode estar fazendo varias contagens separadas no banco, o que aumenta o custo de abertura da area administrativa.  
+  Por fim, dependencias usando `"latest"` podem trazer mudancas inesperadas em futuras instalacoes, causando bugs ou perda de performance.
+
+  **Escopo permitido:**  
+  - Criar migration com indices de performance.
+  - Adicionar indices seguros para consultas de produtos e imagens.
+  - Otimizar metricas do dashboard administrativo.
+  - Reduzir multiplas contagens do dashboard quando for seguro.
+  - Fixar versoes no `package.json` com base no `package-lock.json`.
+  - Rodar validacoes do Prisma, TypeScript, lint e build.
+  - Documentar riscos e comandos executados.
+
+  **Escopo proibido:**  
+  - Nao alterar regras de negocio.
+  - Nao alterar cadastro, edicao, publicacao ou arquivamento de produtos.
+  - Nao alterar upload de imagens.
+  - Nao alterar componentes visuais.
+  - Nao alterar layout publico ou admin.
+  - Nao alterar paginacao publica.
+  - Nao alterar paginacao admin.
+  - Nao mexer em cache publico.
+  - Nao remover campos do banco.
+  - Nao renomear colunas existentes.
+  - Nao apagar migrations antigas.
+  - Nao atualizar dependencias para novas versoes sem necessidade.
+  - Nao trocar biblioteca principal do projeto.
+
+  **Arquivos provaveis:**  
+  - `prisma/schema.prisma`
+  - `prisma/migrations/*`
+  - `src/features/products/get-admin-dashboard-metrics.ts`
+  - `package.json`
+  - `package-lock.json`
+  - `specs/performance-baseline.md`, somente se necessario registrar observacoes finais
+
+  **Passos de implementacao:**
+
+  1. Revisar o schema Prisma antes de criar qualquer migration.
+
+     Verificar:
+
+     ```txt
+     prisma/schema.prisma
+     ```
+
+     Identificar os nomes reais dos models e campos relacionados a:
+
+     ```txt
+     Product
+     ProductImage
+     status
+     isFeatured
+     isPublicVisible
+     isArchived
+     mainImageId
+     createdAt
+     updatedAt
+     productId
+     sortOrder
+     ```
+
+     Usar os nomes reais do projeto.  
+     Nao inventar campo novo nesta task.
+
+  2. Revisar as consultas otimizadas nas tasks anteriores.
+
+     Conferir quais campos sao usados em:
+
+     ```txt
+     src/features/products/public-list-products.ts
+     src/features/products/admin-list-products.ts
+     src/features/products/get-admin-dashboard-metrics.ts
+     ```
+
+     Os indices devem apoiar as consultas reais do sistema, especialmente:
+
+     - listagem publica de produtos;
+     - ordenacao por destaque e data;
+     - listagem admin por data de atualizacao;
+     - imagens ordenadas por produto;
+     - produtos visiveis publicamente.
+
+  3. Criar migration de indices de performance.
+
+     Criar uma nova migration Prisma com nome claro, por exemplo:
+
+     ```txt
+     add_product_performance_indexes
+     ```
+
+     A migration deve ser pequena e objetiva.
+
+     Exemplo de indices sugeridos, adaptando nomes de tabelas e colunas ao banco real:
+
+     ```sql
+     CREATE INDEX IF NOT EXISTS "product_images_product_order_idx"
+     ON "product_images"("product_id", "sort_order", "created_at", "id");
+
+     CREATE INDEX IF NOT EXISTS "products_admin_order_idx"
+     ON "products"("updated_at" DESC, "created_at" DESC, "id" DESC);
+
+     CREATE INDEX IF NOT EXISTS "products_public_active_order_idx"
+     ON "products"("is_featured" DESC, "created_at" DESC, "id" DESC)
+     WHERE "is_public_visible" = true
+       AND "is_archived" = false
+       AND "status" <> 'rascunho'
+       AND "main_image_id" IS NOT NULL;
+     ```
+
+     **Importante:**  
+     Antes de aplicar, confirmar se os nomes das tabelas e colunas no banco usam `snake_case` exatamente como no exemplo.  
+     Se o Prisma mapear nomes diferentes com `@@map` ou `@map`, usar os nomes reais do banco.
+
+  4. Evitar indices duplicados.
+
+     Antes de criar novos indices, verificar se ja existem indices equivalentes no `schema.prisma` ou migrations antigas.
+
+     Se ja existir um indice igual ou muito parecido, nao duplicar.
+
+     Nesse caso, documentar que o indice ja existia e seguir para o proximo.
+
+  5. Otimizar metricas do dashboard administrativo.
+
+     Revisar:
+
+     ```txt
+     src/features/products/get-admin-dashboard-metrics.ts
+     ```
+
+     Se o arquivo fizer muitas chamadas separadas como:
+
+     ```ts
+     prisma.product.count()
+     ```
+
+     avaliar trocar por uma consulta unica com SQL agregado.
+
+     Direcao esperada:
+
+     ```ts
+     const [metrics] = await prisma.$queryRaw<AdminDashboardMetrics[]>`
+       SELECT
+         COUNT(*)::int AS "totalProducts",
+         COUNT(*) FILTER (WHERE status <> 'rascunho')::int AS "publishedProducts",
+         COUNT(*) FILTER (WHERE status = 'disponivel')::int AS "availableProducts",
+         COUNT(*) FILTER (
+           WHERE is_archived = false
+             AND is_public_visible = true
+             AND main_image_id IS NOT NULL
+             AND status <> 'rascunho'
+         )::int AS "publiclyVisibleProducts",
+         COUNT(*) FILTER (WHERE status = 'rascunho')::int AS "draftProducts",
+         COUNT(*) FILTER (WHERE is_archived = true)::int AS "archivedProducts",
+         COUNT(*) FILTER (WHERE is_featured = true)::int AS "featuredProducts",
+         COUNT(*) FILTER (WHERE main_image_id IS NULL)::int AS "productsMissingMainImage"
+       FROM products
+     `;
+     ```
+
+     Adaptar nomes de tabela, colunas e status aos nomes reais do projeto.
+
+     Se houver risco de incompatibilidade com o banco ou com tipos existentes, manter as contagens atuais e documentar o motivo.
+
+  6. Preservar o formato retornado pelas metricas.
+
+     A tela admin que consome as metricas nao deve precisar ser reescrita.
+
+     O retorno da funcao deve continuar com os mesmos nomes de propriedades que ja existem.
+
+     Se os nomes atuais forem diferentes do exemplo acima, manter os nomes atuais.
+
+  7. Fixar versoes no `package.json`.
+
+     Revisar:
+
+     ```txt
+     package.json
+     package-lock.json
+     ```
+
+     Procurar dependencias usando:
+
+     ```json
+     "latest"
+     ```
+
+     Trocar por versoes fixas presentes no `package-lock.json`.
+
+     Exemplo:
+
+     ```json
+     "next": "16.2.4",
+     "react": "19.2.5",
+     "react-dom": "19.2.5"
+     ```
+
+     Usar as versoes reais encontradas no `package-lock.json` do projeto.
+
+  8. Nao atualizar dependencias nesta task.
+
+     Esta task deve apenas fixar as versoes atuais.
+
+     Nao rodar comandos como:
+
+     ```bash
+     npm update
+     npm install next@latest
+     npm install react@latest
+     ```
+
+     O objetivo e estabilidade, nao upgrade.
+
+  9. Atualizar o `package-lock.json` de forma segura.
+
+     Depois de alterar o `package.json`, rodar:
+
+     ```bash
+     npm install --package-lock-only
+     ```
+
+     ou o comando equivalente seguro para sincronizar o lockfile sem atualizar pacotes indevidamente.
+
+     Se o lockfile nao mudar, documentar isso no resultado.
+
+  10. Aplicar e validar migration em ambiente local.
+
+      Rodar:
+
+      ```bash
+      npm run prisma:validate
+      ```
+
+      Depois, se o projeto tiver script seguro de migration local, rodar o script existente.
+
+      Exemplos possiveis:
+
+      ```bash
+      npm run prisma:migrate
+      ```
+
+      ou:
+
+      ```bash
+      npx prisma migrate dev
+      ```
+
+      Usar preferencialmente o script ja definido no `package.json`.
+
+      Se o ambiente nao tiver banco configurado, nao forcar migration.  
+      Nesse caso, registrar que a migration foi criada, mas nao aplicada localmente por falta de ambiente.
+
+  11. Rodar validacoes obrigatorias:
+
+      ```bash
+      npm run prisma:validate
+      npm run typecheck
+      npm run lint
+      npm run build
+      ```
+
+  12. Atualizar o checklist da T46 no `specs/04-tasks.md` somente depois que a task estiver concluida e validada.
+
+  13. Registrar observacoes finais no baseline, se fizer sentido.
+
+      Se a task melhorar pontos importantes ou se algum comando nao puder ser executado, atualizar:
+
+      ```txt
+      specs/performance-baseline.md
+      ```
+
+      Com uma secao simples:
+
+      ```md
+      ## Observacoes apos T46
+
+      - Indices adicionados:
+      - Metricas otimizadas:
+      - Dependencias fixadas:
+      - Comandos executados:
+      - Pendencias:
+      ```
+
+  **Criterios de aceite:**
+
+  - Foram criados indices de performance apenas quando nao havia indice equivalente.
+  - A migration usa nomes reais de tabelas e colunas do banco.
+  - Nenhuma coluna foi removida ou renomeada.
+  - Nenhuma regra de negocio foi alterada.
+  - As metricas do dashboard continuam retornando os mesmos campos esperados pela interface.
+  - Se as metricas foram otimizadas, a nova consulta retorna os mesmos valores logicos da implementacao anterior.
+  - Dependencias que estavam como `"latest"` foram fixadas com base no `package-lock.json`.
+  - Nenhuma dependencia foi atualizada sem necessidade.
+  - `package.json` e `package-lock.json` ficaram consistentes.
+  - O Prisma valida corretamente.
+  - O build final passa, se o ambiente estiver completo.
+
+  **Validacoes obrigatorias:**
+
+  ```bash
+  npm run prisma:validate
+  npm run typecheck
+  npm run lint
+  npm run build
+
+
+- [ ] T47. Comprimir e redimensionar imagens no upload
+
+  **Objetivo:**  
+  Reduzir o peso das imagens enviadas para o AgroMassa, comprimindo e redimensionando arquivos no momento do upload, sem quebrar imagens existentes, visualizacao publica, listagem admin ou fluxo de cadastro de produtos.
+
+  **Motivo:**  
+  Mesmo com `next/image`, se as imagens originais enviadas forem muito grandes, o sistema ainda pode sofrer com uploads pesados, armazenamento maior e carregamento mais lento.  
+  Otimizar a imagem antes de salvar no Supabase reduz tamanho dos arquivos, melhora carregamento do catalogo e evita que imagens muito grandes deixem o sistema lento.
+
+  **Escopo permitido:**  
+  - Revisar o fluxo atual de upload de imagens.
+  - Redimensionar imagens grandes antes do envio ao Supabase.
+  - Comprimir imagens para um formato mais leve, preferencialmente WebP, se for seguro.
+  - Manter compatibilidade com imagens existentes.
+  - Preservar fallback de imagem padrao.
+  - Preservar validacoes atuais de tipo e tamanho.
+  - Atualizar metadata de imagem, se o projeto ja salva largura, altura, tamanho ou tipo.
+  - Adicionar dependencia de processamento de imagem somente se necessario e seguro.
+
+  **Escopo proibido:**  
+  - Nao alterar regras de produto.
+  - Nao alterar regras de publicacao, destaque, visibilidade ou arquivamento.
+  - Nao alterar listagem publica.
+  - Nao alterar listagem admin.
+  - Nao alterar paginacao.
+  - Nao alterar cache.
+  - Nao alterar schema Prisma, a menos que ja exista campo inutilizado e seja estritamente necessario. Preferir nao mexer no schema nesta task.
+  - Nao criar migration, salvo se for absolutamente indispensavel e justificado.
+  - Nao apagar imagens antigas do Supabase.
+  - Nao converter imagens antigas em massa nesta task.
+  - Nao remover suporte a formatos existentes sem confirmar impacto.
+  - Nao trocar provider de storage.
+
+  **Arquivos provaveis:**  
+  - `src/lib/storage/supabase-storage.ts`
+  - `src/features/products/actions.ts`, somente se o upload passar por aqui
+  - `src/features/products/image-actions.ts`, se existir
+  - `src/components/admin/product-image-uploader.tsx`, somente para verificar contrato
+  - `package.json`, se for necessario adicionar dependencia
+  - `package-lock.json`, se for necessario adicionar dependencia
+
+  **Passos de implementacao:**
+
+  1. Revisar o fluxo atual de upload de imagens.
+
+     Verificar onde o arquivo e recebido, validado e enviado ao Supabase.
+
+     Procurar por funcoes como:
+
+     ```txt
+     uploadProductImage
+     uploadImage
+     uploadProductImageToStorage
+     validateImage
+     getProductImageDisplayUrl
+     ```
+
+     Verificar principalmente:
+
+     ```txt
+     src/lib/storage/supabase-storage.ts
+     src/features/products/actions.ts
+     ```
+
+  2. Identificar as validacoes atuais.
+
+     Antes de alterar o upload, confirmar:
+
+     - tamanho maximo aceito;
+     - tipos aceitos;
+     - extensoes aceitas;
+     - onde o erro e exibido para o usuario;
+     - se o sistema salva `mimeType`, `size`, `width` ou `height`;
+     - se o Supabase recebe `contentType`.
+
+     Nao remover nenhuma validacao existente sem necessidade.
+
+  3. Escolher estrategia segura de otimizacao.
+
+     Preferir esta estrategia inicial:
+
+     ```txt
+     - redimensionar imagens maiores que 1600px de largura
+     - manter proporcao original
+     - converter para WebP com qualidade entre 75 e 85
+     - nao aumentar imagens pequenas
+     ```
+
+     Exemplo de parametros seguros:
+
+     ```txt
+     largura maxima: 1600px
+     qualidade WebP: 80
+     formato final: image/webp
+     ```
+
+     Se houver risco de incompatibilidade com WebP no fluxo atual, manter o formato original e apenas redimensionar/comprimir.
+
+  4. Avaliar dependencia de processamento de imagem.
+
+     Se o projeto roda em ambiente Node.js compatível, usar `sharp`.
+
+     Adicionar apenas se necessario:
+
+     ```bash
+     npm install sharp
+     ```
+
+     Se o ambiente de deploy nao suportar `sharp`, nao implementar conversao com `sharp`. Documentar o risco e manter a task sem mudanca arriscada.
+
+  5. Criar funcao isolada para otimizar imagem.
+
+     Criar uma funcao pequena e testavel, por exemplo:
+
+     ```ts
+     async function optimizeProductImage(file: File): Promise<{
+       buffer: Buffer;
+       contentType: string;
+       extension: string;
+       size: number;
+       width?: number;
+       height?: number;
+     }>
+     ```
+
+     Ou adaptar ao formato real usado no projeto.
+
+     A funcao deve:
+
+     - receber o arquivo original;
+     - validar se e imagem;
+     - converter para buffer;
+     - otimizar;
+     - retornar buffer final, content type e extensao correta;
+     - em caso de erro de otimizacao, retornar erro claro sem quebrar silenciosamente.
+
+  6. Atualizar o upload para enviar o arquivo otimizado.
+
+     No envio ao Supabase:
+
+     - usar o buffer otimizado;
+     - usar `contentType` correto;
+     - ajustar nome/extensao do arquivo se converter para WebP;
+     - manter path/storage key compativel com o padrao atual;
+     - manter retorno esperado pela interface.
+
+     Se antes o arquivo era `.jpg` e passar a ser `.webp`, garantir que:
+
+     ```txt
+     storageKey
+     publicUrl
+     mimeType
+     ```
+
+     fiquem coerentes.
+
+  7. Preservar imagens existentes.
+
+     Esta task nao deve alterar imagens ja cadastradas.
+
+     Imagens antigas devem continuar abrindo normalmente.
+
+     O sistema deve aceitar que alguns produtos tenham imagem antiga em JPG/PNG e novos produtos tenham imagem WebP.
+
+  8. Preservar comportamento da interface.
+
+     O usuario admin deve continuar conseguindo:
+
+     - selecionar imagem;
+     - enviar imagem;
+     - ver preview;
+     - definir imagem principal;
+     - remover imagem, se essa funcionalidade existir;
+     - ver erro amigavel se o arquivo for invalido.
+
+  9. Garantir fallback em caso de erro.
+
+     Se a otimizacao falhar por formato invalido ou erro de processamento:
+
+     - nao salvar imagem quebrada;
+     - retornar mensagem clara;
+     - nao deixar produto em estado inconsistente.
+
+     Nao fazer fallback silencioso para upload original se isso puder permitir arquivos muito pesados.  
+     Se optar por fallback, documentar claramente o motivo.
+
+  10. Atualizar dependencias com cuidado.
+
+      Se adicionar `sharp`, garantir que `package.json` e `package-lock.json` sejam atualizados.
+
+      Nao atualizar outras dependencias nesta task.
+
+      Nao trocar versoes de Next, React, Prisma ou bibliotecas principais.
+
+  11. Rodar validacoes obrigatorias:
+
+      ```bash
+      npm run prisma:validate
+      npm run typecheck
+      npm run lint
+      npm run build
+      ```
+
+  12. Testar upload manualmente.
+
+      Testar pelo menos:
+
+      ```txt
+      imagem JPG grande
+      imagem PNG grande
+      imagem pequena
+      arquivo invalido
+      ```
+
+      Confirmar que imagens grandes ficam menores depois do upload.
+
+  13. Atualizar o checklist da T47 no `specs/04-tasks.md` somente depois que a task estiver concluida e validada.
+
+  **Criterios de aceite:**
+
+  - Upload de imagem continua funcionando.
+  - Imagens grandes sao redimensionadas antes de salvar.
+  - Imagens novas ficam mais leves que o arquivo original quando aplicavel.
+  - Imagens pequenas nao sao aumentadas sem necessidade.
+  - Content type salvo/enviado ao Supabase fica correto.
+  - URLs das imagens novas continuam funcionando.
+  - Imagens antigas continuam funcionando.
+  - Preview e visualizacao no admin continuam funcionando.
+  - Catalogo publico continua exibindo imagens corretamente.
+  - Produto sem imagem continua usando fallback.
+  - Arquivos invalidos continuam sendo rejeitados.
+  - Nenhuma regra de produto foi alterada.
+  - Nenhuma migration foi criada, salvo se extremamente justificada.
+  - O build final passa.
+
+  **Validacoes obrigatorias:**
+
+  ```bash
+  npm run prisma:validate
+  npm run typecheck
+  npm run lint
+  npm run build
+
+
+  - [ ] T48. Melhorar estados de carregamento e navegacao
+
+  **Objetivo:**  
+  Melhorar a percepcao de velocidade do AgroMassa durante navegacoes, carregamentos de paginas e acoes demoradas, exibindo feedback visual claro para o usuario sem alterar regras de negocio ou fluxo de dados.
+
+  **Motivo:**  
+  Mesmo apos otimizar consultas, imagens e cache, o usuario ainda pode sentir delay se a interface nao mostrar que algo esta carregando.  
+  Estados de loading, skeletons e feedback de navegacao deixam o sistema mais responsivo visualmente e evitam a sensacao de que o clique nao funcionou.
+
+  **Escopo permitido:**  
+  - Criar `loading.tsx` em rotas publicas e admin quando fizer sentido.
+  - Criar skeletons simples para catalogo, tabela admin e dashboard.
+  - Melhorar feedback visual em botoes de navegacao ou formularios, se ainda houver delay perceptivel.
+  - Manter layout visual coerente com o AgroMassa.
+  - Evitar mudancas grandes de design.
+  - Reutilizar classes e componentes existentes sempre que possivel.
+
+  **Escopo proibido:**  
+  - Nao alterar regras de negocio.
+  - Nao alterar consultas Prisma.
+  - Nao alterar schema Prisma.
+  - Nao criar migration.
+  - Nao alterar upload de imagens.
+  - Nao alterar cache.
+  - Nao alterar paginacao publica ou admin.
+  - Nao mexer em server actions de produto, exceto se for apenas para preservar tipos/imports.
+  - Nao instalar biblioteca nova de UI.
+  - Nao refazer o layout do sistema.
+  - Nao criar animacoes pesadas que prejudiquem performance.
+
+  **Arquivos provaveis:**  
+  - `app/(public)/loading.tsx`
+  - `app/(public)/produtos/loading.tsx`
+  - `app/admin/(protected)/loading.tsx`
+  - `app/admin/(protected)/produtos/loading.tsx`
+  - `src/components/public/product-card-skeleton.tsx`, se necessario
+  - `src/components/admin/products-table-skeleton.tsx`, se necessario
+  - `src/components/admin/dashboard-skeleton.tsx`, se necessario
+  - Componentes de botoes ou formularios especificos, somente se necessario
+
+  **Passos de implementacao:**
+
+  1. Revisar rotas que podem apresentar delay visual.
+
+     Verificar principalmente:
+
+     ```txt
+     app/(public)/page.tsx
+     app/(public)/produtos/page.tsx
+     app/admin/(protected)/page.tsx
+     app/admin/(protected)/produtos/page.tsx
+     ```
+
+     Identificar quais telas carregam dados do banco, imagens ou listas maiores.
+
+  2. Criar estados de loading por rota usando o padrao do Next.js.
+
+     Criar arquivos `loading.tsx` apenas onde houver ganho real, por exemplo:
+
+     ```txt
+     app/(public)/produtos/loading.tsx
+     app/admin/(protected)/produtos/loading.tsx
+     ```
+
+     Se a home publica ou dashboard admin tambem tiverem demora, criar:
+
+     ```txt
+     app/(public)/loading.tsx
+     app/admin/(protected)/loading.tsx
+     ```
+
+     Nao criar loading desnecessario em rotas muito simples.
+
+  3. Criar skeleton para cards de produto.
+
+     Se ainda nao existir, criar um componente simples:
+
+     ```txt
+     src/components/public/product-card-skeleton.tsx
+     ```
+
+     O skeleton deve:
+
+     - lembrar o formato real do card;
+     - nao depender de dados;
+     - nao usar JavaScript client se nao for necessario;
+     - usar apenas CSS/classes existentes;
+     - ser leve.
+
+  4. Criar skeleton para tabela admin, se necessario.
+
+     Se `/admin/produtos` ainda tiver delay perceptivel, criar:
+
+     ```txt
+     src/components/admin/products-table-skeleton.tsx
+     ```
+
+     O skeleton deve representar:
+
+     - barra ou cabecalho da tabela;
+     - algumas linhas falsas;
+     - botoes/acoes simulados visualmente;
+     - sem interatividade real.
+
+  5. Criar skeleton para dashboard admin, se necessario.
+
+     Se `/admin` carrega metricas e cards, criar:
+
+     ```txt
+     src/components/admin/dashboard-skeleton.tsx
+     ```
+
+     O skeleton deve representar os cards principais sem buscar dados.
+
+  6. Manter componentes de loading como Server Components.
+
+     Nao adicionar `"use client"` em skeletons, a menos que seja indispensavel.
+
+     Loading visual simples nao deve adicionar JavaScript desnecessario.
+
+  7. Evitar spinners grandes e bloqueantes.
+
+     Preferir skeletons leves a telas inteiras com spinner.
+
+     O usuario deve sentir que a pagina esta carregando estrutura, nao que o sistema travou.
+
+  8. Melhorar feedback de botoes apenas onde ainda houver delay claro.
+
+     Se houver botoes de formulario ou navegacao sem feedback, ajustar com cuidado.
+
+     Regras:
+
+     - nao duplicar logica ja criada na T44;
+     - nao mexer em server actions sem necessidade;
+     - nao alterar regra de submit;
+     - apenas exibir estado pendente quando ja houver suporte seguro.
+
+  9. Preservar acessibilidade basica.
+
+     Quando houver loading, usar textos claros quando necessario:
+
+     ```txt
+     Carregando produtos...
+     Carregando painel...
+     ```
+
+     Evitar que skeletons sejam lidos como conteudo real por leitores de tela, quando aplicavel.
+
+  10. Garantir que o loading nao cause mudanca brusca de layout.
+
+      O skeleton deve ter altura e estrutura parecida com a tela final.
+
+      Isso reduz saltos visuais enquanto os dados carregam.
+
+  11. Rodar validacoes obrigatorias:
+
+      ```bash
+      npm run prisma:validate
+      npm run typecheck
+      npm run lint
+      npm run build
+      ```
+
+  12. Atualizar o checklist da T48 no `specs/04-tasks.md` somente depois que a task estiver concluida e validada.
+
+  **Criterios de aceite:**
+
+  - Rotas com carregamento perceptivel exibem feedback visual adequado.
+  - `/produtos` mostra skeleton ou loading leve enquanto carrega.
+  - `/admin/produtos` mostra skeleton ou loading leve enquanto carrega, se aplicavel.
+  - `/admin` mostra skeleton ou loading leve enquanto carrega, se aplicavel.
+  - Loading states nao adicionam JavaScript client desnecessario.
+  - Skeletons respeitam o layout visual existente.
+  - Nao ha alteracao de regra de negocio.
+  - Nao ha alteracao de schema Prisma.
+  - Nenhuma migration foi criada.
+  - O build final passa.
+
+  **Validacoes obrigatorias:**
+
+  ```bash
+  npm run prisma:validate
+  npm run typecheck
+  npm run lint
+  npm run build
+
+  - [ ] T49. Reduzir JavaScript client desnecessario
+
+  **Objetivo:**  
+  Reduzir a quantidade de JavaScript enviada ao navegador, removendo `"use client"` de componentes que nao precisam de interatividade e separando componentes estaticos de componentes interativos quando for seguro.
+
+  **Motivo:**  
+  Em projetos Next.js, componentes marcados com `"use client"` aumentam o JavaScript enviado ao navegador e precisam ser hidratados no cliente.  
+  Se componentes grandes, tabelas, cards, layouts ou secoes estaticas estiverem como client components sem necessidade, o sistema pode ficar mais pesado e com delay perceptivel em navegacoes e cliques.
+
+  **Escopo permitido:**  
+  - Mapear componentes que usam `"use client"`.
+  - Identificar componentes que nao usam estado, eventos, hooks ou APIs do navegador.
+  - Remover `"use client"` apenas onde for claramente seguro.
+  - Separar partes interativas em componentes client pequenos, se necessario.
+  - Manter componentes visuais estaticos como Server Components.
+  - Preservar comportamento, layout e estilos existentes.
+  - Documentar componentes que precisam continuar client.
+
+  **Escopo proibido:**  
+  - Nao alterar regras de negocio.
+  - Nao alterar consultas Prisma.
+  - Nao alterar server actions.
+  - Nao alterar schema Prisma.
+  - Nao criar migration.
+  - Nao alterar upload de imagens.
+  - Nao alterar paginacao publica ou admin.
+  - Nao mexer em cache.
+  - Nao instalar biblioteca nova.
+  - Nao refatorar grandes areas do sistema sem necessidade.
+  - Nao remover `"use client"` de componentes que usam hooks client.
+  - Nao remover `"use client"` de componentes que usam eventos como `onClick`, `onChange`, `onSubmit`.
+  - Nao remover `"use client"` de componentes que usam `useState`, `useEffect`, `useTransition`, `useRouter`, `usePathname`, `useSearchParams`, `window`, `document` ou `localStorage`.
+
+  **Arquivos provaveis:**  
+  - `src/components/**/*.tsx`
+  - `app/**/*.tsx`
+  - `src/components/admin/products-table.tsx`
+  - `src/components/public/**/*.tsx`
+  - `src/components/layout/**/*.tsx`, se existir
+  - `src/components/providers/**/*.tsx`, somente para verificar uso
+
+  **Passos de implementacao:**
+
+  1. Mapear todos os arquivos que usam `"use client"`.
+
+     Rodar ou procurar manualmente:
+
+     ```bash
+     grep -R "\"use client\"" -n app src
+     ```
+
+     Se estiver no Windows, usar busca do editor ou comando equivalente.
+
+  2. Para cada arquivo encontrado, classificar como:
+
+     ```txt
+     precisa continuar client
+     pode virar server component
+     pode ser dividido em server + client pequeno
+     duvidoso, manter como esta
+     ```
+
+     Nao alterar arquivos duvidosos.
+
+  3. Confirmar se o componente usa recursos client.
+
+     Um componente deve continuar client se usar qualquer item como:
+
+     ```txt
+     useState
+     useEffect
+     useTransition
+     useRouter
+     usePathname
+     useSearchParams
+     onClick
+     onChange
+     onSubmit
+     window
+     document
+     localStorage
+     sessionStorage
+     File
+     FileReader
+     input de upload
+     drag and drop
+     toast
+     ```
+
+  4. Remover `"use client"` somente de componentes claramente estaticos.
+
+     Exemplos de componentes que podem ser server:
+
+     ```txt
+     card puramente visual
+     cabecalho sem menu interativo
+     bloco de texto
+     badge
+     skeleton
+     secao institucional
+     card de produto sem evento client
+     tabela sem acoes client internas
+     ```
+
+     Remover apenas quando nao houver hooks, eventos ou APIs do navegador.
+
+  5. Separar componente grande quando for seguro.
+
+     Se um componente grande tiver uma pequena parte interativa, preferir separar:
+
+     ```txt
+     componente-grande.tsx        -> server component
+     componente-controles.tsx     -> client component
+     ```
+
+     Exemplo de direcao:
+
+     ```txt
+     ProductCard       -> server, se apenas exibe dados
+     FavoriteButton    -> client, se tiver clique
+     ProductsTable     -> server, se estrutura for estatica
+     ProductActions    -> client, se tiver botoes e estado
+     ```
+
+     Se a separacao exigir muitas mudancas ou gerar risco, nao fazer nesta task.
+
+  6. Preservar imports e tipos.
+
+     Ao remover `"use client"`, verificar se algum import passa a ser invalido em Server Component.
+
+     Se o componente importar algo client, manter como client ou separar com cuidado.
+
+  7. Nao alterar visual.
+
+     A task deve manter:
+
+     - classes CSS;
+     - estrutura visual;
+     - textos;
+     - responsividade;
+     - comportamento de hover;
+     - links existentes;
+     - acessibilidade existente.
+
+  8. Nao alterar fluxo de dados.
+
+     Nao mover chamadas Prisma, server actions ou regras de carregamento nesta task.
+
+     O objetivo e apenas reduzir client JavaScript quando for seguro.
+
+  9. Documentar componentes que permaneceram client.
+
+     Se algum componente parece pesado mas precisa continuar client, registrar no resultado final o motivo.
+
+     Exemplo:
+
+     ```txt
+     product-image-uploader.tsx continua client porque usa input file e estado de upload.
+     products-table-actions.tsx continua client porque usa server actions, loading e toast.
+     ```
+
+  10. Rodar validacoes obrigatorias:
+
+      ```bash
+      npm run prisma:validate
+      npm run typecheck
+      npm run lint
+      npm run build
+      ```
+
+  11. Atualizar o checklist da T49 no `specs/04-tasks.md` somente depois que a task estiver concluida e validada.
+
+  **Criterios de aceite:**
+
+  - Componentes client foram revisados com cuidado.
+  - `"use client"` foi removido apenas de componentes claramente seguros.
+  - Partes interativas continuam funcionando.
+  - Componentes com hooks, eventos ou APIs do navegador continuam como client.
+  - Nenhuma regra de negocio foi alterada.
+  - Nenhuma consulta Prisma foi alterada.
+  - Nenhuma migration foi criada.
+  - O layout visual permanece equivalente.
+  - O admin continua funcionando.
+  - O site publico continua funcionando.
+  - O build final passa.
+
+  **Validacoes obrigatorias:**
+
+  ```bash
+  npm run prisma:validate
+  npm run typecheck
+  npm run lint
+  npm run build
+
+  - [ ] T50. Auditar bundle, imports e dependencias pesadas
+
+  **Objetivo:**  
+  Identificar e reduzir peso desnecessario no bundle JavaScript do AgroMassa, revisando imports, dependencias, componentes carregados no cliente e bibliotecas usadas em paginas publicas e administrativas.
+
+  **Motivo:**  
+  Mesmo com consultas, imagens e cache otimizados, o sistema ainda pode ficar lento se o navegador precisar baixar, interpretar e hidratar JavaScript demais.  
+  Imports grandes, bibliotecas usadas de forma global, componentes client desnecessarios ou dependencias pouco usadas podem aumentar o tempo de carregamento e causar delay ao clicar.
+
+  **Escopo permitido:**  
+  - Auditar tamanho do bundle do projeto.
+  - Identificar dependencias pesadas ou pouco usadas.
+  - Revisar imports desnecessarios em componentes publicos e admin.
+  - Trocar imports amplos por imports especificos quando for seguro.
+  - Remover dependencias nao usadas somente se houver certeza.
+  - Aplicar dynamic import em componentes pesados e nao essenciais, quando for seguro.
+  - Documentar dependencias que devem permanecer.
+
+  **Escopo proibido:**  
+  - Nao alterar regra de negocio.
+  - Nao alterar consultas Prisma.
+  - Nao alterar schema Prisma.
+  - Nao criar migration.
+  - Nao alterar upload de imagens.
+  - Nao alterar cache.
+  - Nao alterar paginacao publica ou admin.
+  - Nao refazer layout.
+  - Nao trocar biblioteca principal do projeto sem necessidade.
+  - Nao remover dependencia se houver duvida sobre uso.
+  - Nao instalar biblioteca nova.
+  - Nao aplicar otimizacao agressiva que mude comportamento visual.
+
+  **Arquivos provaveis:**  
+  - `package.json`
+  - `package-lock.json`
+  - `next.config.ts`
+  - `app/**/*.tsx`
+  - `src/components/**/*.tsx`
+  - `src/lib/**/*.ts`
+  - `src/features/**/*.ts`
+  - `src/features/**/*.tsx`
+
+  **Passos de implementacao:**
+
+  1. Gerar build atual do projeto.
+
+     Rodar:
+
+     ```bash
+     npm run build
+     ```
+
+     Registrar se o build aponta paginas, chunks ou bundles grandes.
+
+  2. Verificar dependencias instaladas.
+
+     Revisar:
+
+     ```txt
+     package.json
+     ```
+
+     Identificar bibliotecas que parecem pesadas ou pouco usadas.
+
+     Exemplos de pontos a observar:
+
+     ```txt
+     bibliotecas de icones
+     bibliotecas de data
+     bibliotecas de grafico
+     editores rich text
+     bibliotecas de animacao
+     bibliotecas de upload
+     bibliotecas UI grandes
+     ```
+
+     Nao remover nada ainda sem confirmar uso real.
+
+  3. Procurar imports amplos ou desnecessarios.
+
+     Buscar padroes como:
+
+     ```ts
+     import * as Icons from ...
+     import { variosItens } from ...
+     ```
+
+     Verificar se ha imports grandes usados em paginas publicas sem necessidade.
+
+     Quando for seguro, trocar por import especifico.
+
+     Exemplo de direcao:
+
+     ```ts
+     import { Search } from "lucide-react";
+     ```
+
+     Em vez de importar biblioteca inteira ou objeto com muitos icones.
+
+  4. Verificar bibliotecas usadas no site publico.
+
+     Revisar paginas e componentes em:
+
+     ```txt
+     app/(public)
+     src/components/public
+     ```
+
+     Confirmar se o site publico esta importando algo administrativo, como:
+
+     ```txt
+     componentes admin
+     providers admin
+     actions admin
+     bibliotecas usadas apenas em formulario admin
+     upload
+     toast
+     editor
+     ```
+
+     Se houver import indevido, separar com cuidado.
+
+  5. Verificar bibliotecas usadas no admin.
+
+     Revisar:
+
+     ```txt
+     app/admin
+     src/components/admin
+     ```
+
+     O admin pode carregar mais JavaScript que o publico, mas ainda deve evitar imports globais desnecessarios.
+
+     Nao remover funcionalidades administrativas.
+
+  6. Identificar componentes pesados que podem ser carregados sob demanda.
+
+     Se houver componente pesado usado apenas depois de uma acao do usuario, avaliar `dynamic import`.
+
+     Exemplos de componentes que podem ser candidatos:
+
+     ```txt
+     modal grande
+     editor
+     uploader avancado
+     preview pesado
+     grafico
+     componente de configuracao raramente usado
+     ```
+
+     Usar dynamic import apenas se:
+
+     - o componente nao for essencial para primeira renderizacao;
+     - nao quebrar SEO publico;
+     - nao causar erro de Server/Client Component;
+     - melhorar carregamento inicial.
+
+  7. Aplicar dynamic import somente em casos seguros.
+
+     Exemplo de direcao:
+
+     ```tsx
+     import dynamic from "next/dynamic";
+
+     const HeavyComponent = dynamic(() => import("./heavy-component"), {
+       loading: () => <div>Carregando...</div>,
+     });
+     ```
+
+     Nao aplicar dynamic import em componente essencial acima da dobra ou em conteudo critico de SEO.
+
+  8. Remover dependencias nao usadas apenas com confirmacao forte.
+
+     Antes de remover qualquer dependencia, confirmar que ela nao aparece em:
+
+     ```txt
+     app
+     src
+     prisma
+     scripts
+     ```
+
+     Se houver duvida, nao remover.
+
+     Se remover dependencia, rodar:
+
+     ```bash
+     npm uninstall nome-da-dependencia
+     ```
+
+     E validar `package.json` e `package-lock.json`.
+
+  9. Nao mexer em dependencias criticas.
+
+     Nao remover ou trocar sem necessidade:
+
+     ```txt
+     next
+     react
+     react-dom
+     prisma
+     @prisma/client
+     typescript
+     tailwind
+     eslint
+     supabase
+     auth
+     ```
+
+  10. Registrar decisoes da auditoria.
+
+      Se fizer sentido, adicionar no baseline ou criar secao em:
+
+      ```txt
+      specs/performance-baseline.md
+      ```
+
+      Exemplo:
+
+      ```md
+      ## Observacoes apos T50
+
+      - Imports otimizados:
+      - Dependencias removidas:
+      - Dependencias mantidas por seguranca:
+      - Componentes carregados sob demanda:
+      - Riscos observados:
+      ```
+
+  11. Rodar validacoes obrigatorias:
+
+      ```bash
+      npm run prisma:validate
+      npm run typecheck
+      npm run lint
+      npm run build
+      ```
+
+  12. Atualizar o checklist da T50 no `specs/04-tasks.md` somente depois que a task estiver concluida e validada.
+
+  **Criterios de aceite:**
+
+  - O bundle foi auditado com base no build.
+  - Imports desnecessarios foram removidos ou ajustados quando seguro.
+  - Imports amplos foram trocados por imports especificos quando seguro.
+  - Componentes pesados foram carregados sob demanda apenas quando isso nao altera comportamento critico.
+  - Dependencias nao usadas foram removidas somente com confirmacao forte.
+  - Dependencias criticas do projeto nao foram trocadas sem necessidade.
+  - Site publico continua funcionando.
+  - Admin continua funcionando.
+  - Nenhuma regra de negocio foi alterada.
+  - Nenhuma migration foi criada.
+  - O build final passa.
+
+  **Validacoes obrigatorias:**
+
+  ```bash
+  npm run prisma:validate
+  npm run typecheck
+  npm run lint
+  npm run build
+
+
 ## Sequenciamento resumido
 
 ```text
