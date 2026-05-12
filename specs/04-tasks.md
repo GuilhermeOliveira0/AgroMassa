@@ -1107,7 +1107,7 @@
 
 ## Fase 15. Otimizacao de performance, estabilidade e resposta visual
 
-- [ ] T40. Criar baseline de performance e validacao de seguranca
+- [x] T40. Criar baseline de performance e validacao de seguranca
 
   **Objetivo:**  
   Registrar o estado atual do AgroMassa antes de qualquer otimizacao, garantindo que as proximas tasks sejam aplicadas com seguranca, sem quebrar funcionalidades existentes.
