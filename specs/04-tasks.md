@@ -1756,7 +1756,7 @@
 
 
 
-- [ ] T43. Criar paginacao real na listagem admin de produtos
+- [x] T43. Criar paginacao real na listagem admin de produtos
 
   **Objetivo:**  
   Otimizar a pagina `/admin/produtos`, evitando que o admin carregue todos os produtos de uma vez. A listagem deve passar a usar paginacao real no banco, mantendo busca, tabela, acoes rapidas e comportamento administrativo existentes.
