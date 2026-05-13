@@ -1297,7 +1297,7 @@
   npm run lint
   npm run build
 
-- [ ] T41. Otimizar imagens dos produtos e URLs do Supabase
+- [x] T41. Otimizar imagens dos produtos e URLs do Supabase
 
   **Objetivo:**  
   Melhorar o carregamento das imagens dos produtos e reduzir chamadas desnecessarias ao Supabase, deixando o catalogo publico e as listagens mais rapidas sem alterar a regra de negocio do sistema.
