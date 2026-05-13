@@ -2019,7 +2019,7 @@
   npm run lint
   npm run build
 
-  - [ ] T44. Reduzir delay das acoes rapidas do admin
+  - [x] T44. Reduzir delay das acoes rapidas do admin
 
   **Objetivo:**  
   Reduzir o delay percebido ao clicar nas acoes rapidas da tabela administrativa de produtos, mantendo o comportamento atual, a seguranca das operacoes e a consistencia visual da interface.
@@ -2250,7 +2250,7 @@
   npm run build
 
 
-- [ ] T45. Aplicar cache publico seguro e reduzir JavaScript desnecessario
+- [x] T45. Aplicar cache publico seguro e reduzir JavaScript desnecessario
 
   **Objetivo:**  
   Deixar as paginas publicas do AgroMassa mais leves e rapidas, removendo renderizacao dinamica desnecessaria e evitando que JavaScript administrativo seja carregado no site publico.
