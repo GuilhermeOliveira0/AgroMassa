@@ -1516,7 +1516,7 @@
   npm run lint
   npm run build
 
-- [ ] T42. Otimizar carregamento do catalogo publico
+- [x] T42. Otimizar carregamento do catalogo publico
 
   **Objetivo:**  
   Otimizar o carregamento da pagina publica de produtos, evitando que o catalogo busque cada vez mais registros no banco conforme o usuario clica em "Carregar mais", mantendo a experiencia atual do usuario e sem alterar regras de negocio.
