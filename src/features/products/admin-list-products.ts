@@ -9,8 +9,13 @@ import {
 } from "./product-publication-readiness";
 
 export type AdminProductListFilters = {
+  page?: number;
+  pageSize?: number;
   q?: string;
 };
+
+export const ADMIN_PRODUCTS_PAGE_SIZE = 20;
+const ADMIN_PRODUCTS_MAX_PAGE_SIZE = 50;
 
 export type AdminProductListItem = {
   id: string;
@@ -31,6 +36,14 @@ export type AdminProductListItem = {
   } | null;
   createdAt: Date;
   updatedAt: Date;
+};
+
+export type AdminProductListPage = {
+  page: number;
+  pageSize: number;
+  products: AdminProductListItem[];
+  total: number;
+  totalPages: number;
 };
 
 const adminProductListSelect = {
@@ -88,26 +101,49 @@ function buildAdminProductWhere(
   };
 }
 
+function normalizePositiveInteger(value: number | undefined, fallback: number) {
+  if (!Number.isInteger(value) || !value || value < 1) {
+    return fallback;
+  }
+
+  return value;
+}
+
+function normalizePageSize(value: number | undefined) {
+  const pageSize = normalizePositiveInteger(value, ADMIN_PRODUCTS_PAGE_SIZE);
+
+  return Math.min(pageSize, ADMIN_PRODUCTS_MAX_PAGE_SIZE);
+}
+
 export async function adminListProducts(
   filters: AdminProductListFilters = {},
-): Promise<AdminProductListItem[]> {
-  const products = await prisma.product.findMany({
-    orderBy: [
-      {
-        updatedAt: "desc",
-      },
-      {
-        createdAt: "desc",
-      },
-      {
-        id: "desc",
-      },
-    ],
-    select: adminProductListSelect,
-    where: buildAdminProductWhere(filters),
-  });
+): Promise<AdminProductListPage> {
+  const page = normalizePositiveInteger(filters.page, 1);
+  const pageSize = normalizePageSize(filters.pageSize);
+  const skip = (page - 1) * pageSize;
+  const where = buildAdminProductWhere(filters);
+  const [total, products] = await prisma.$transaction([
+    prisma.product.count({ where }),
+    prisma.product.findMany({
+      orderBy: [
+        {
+          updatedAt: "desc",
+        },
+        {
+          createdAt: "desc",
+        },
+        {
+          id: "desc",
+        },
+      ],
+      select: adminProductListSelect,
+      skip,
+      take: pageSize,
+      where,
+    }),
+  ]);
 
-  return Promise.all(
+  const listProducts = await Promise.all(
     products.map(async (product) => {
       const publicationBlockReason = getProductPublicationBlockReason(product);
 
@@ -138,4 +174,12 @@ export async function adminListProducts(
       };
     }),
   );
+
+  return {
+    page,
+    pageSize,
+    products: listProducts,
+    total,
+    totalPages: Math.max(Math.ceil(total / pageSize), 1),
+  };
 }

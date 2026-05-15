@@ -2462,7 +2462,7 @@
   npm run build
 
 
-  - [ ] T46. Otimizar banco, metricas do dashboard e versoes do projeto
+  - [x] T46. Otimizar banco, metricas do dashboard e versoes do projeto
 
   **Objetivo:**  
   Melhorar a performance das consultas principais do AgroMassa, otimizar as metricas do dashboard administrativo e estabilizar as versoes das dependencias do projeto para evitar que futuras instalacoes quebrem comportamento, build ou performance.
@@ -3659,6 +3659,74 @@
   npm run typecheck
   npm run lint
   npm run build
+
+- [ ] T52. Reduzir tempo da primeira carga do catalogo publico
+
+  **Objetivo:**  
+  Reduzir o tempo de resposta da primeira carga de `/produtos` e `/api/public/products?page=1`, mantendo regras de visibilidade, filtros, imagens, paginação e comportamento público existentes.
+
+  **Meta de performance:**  
+  Buscar reduzir `/produtos` para abaixo de 1.5s em `next start`, quando a conexão com Supabase estiver estável. Se a rede/Supabase oscilar, registrar os tempos e separar latência externa de custo do código.
+
+  **Motivo:**  
+  Após T40-T46, a home, detalhe e API de página 2 estão aceitáveis, mas a primeira carga do catálogo ainda está lenta. O gargalo provável está na montagem inicial dos dados públicos, geração de URLs assinadas do Supabase e consultas auxiliares como filtros/marcas/configurações.
+
+  **Escopo permitido:**  
+  - Medir internamente o tempo de cada etapa da primeira carga de `/produtos`.
+  - Reduzir chamadas repetidas ao Supabase Storage.
+  - Assinar URLs em lote, se o SDK atual permitir.
+  - Reutilizar/cachear URLs assinadas com segurança.
+  - Evitar assinar URL local, fallback, pública ou inválida.
+  - Cachear dados públicos auxiliares estáveis, como filtros, marcas, categorias ou configurações institucionais, se for seguro.
+  - Preservar `unoptimized` para URLs assinadas do Supabase.
+  - Preservar `revalidate = 60` das páginas públicas.
+
+  **Escopo proibido:**  
+  - Não alterar regra de negócio.
+  - Não alterar schema Prisma.
+  - Não criar migration.
+  - Não alterar upload de imagem.
+  - Não alterar paginação pública já criada na T42.
+  - Não alterar paginação admin.
+  - Não alterar ações rápidas admin.
+  - Não alterar autenticação.
+  - Não usar `dangerouslyAllowLocalIP`.
+  - Não tornar bucket privado em público sem decisão explícita.
+  - Não mascarar erro de banco ou Supabase com fallback falso.
+  - Não refatorar layout visual do catálogo.
+
+  **Arquivos prováveis:**  
+  - `app/(public)/produtos/page.tsx`
+  - `app/api/public/products/route.ts`
+  - `src/features/products/public-list-products.ts`
+  - `src/features/products/get-public-product-by-slug.ts`
+  - `src/lib/storage/supabase-storage.ts`
+  - `src/lib/storage/supabase-image-url.ts`
+  - `src/features/institutional/get-site-settings.ts`
+  - arquivos de filtros públicos, marcas ou categorias, se existirem
+
+  **Critérios de aceite:**
+
+  - `/produtos` continua funcionando.
+  - `/api/public/products?page=1` continua funcionando.
+  - Filtros e busca continuam preservados.
+  - Produtos privados, rascunhos ou arquivados continuam fora do catálogo.
+  - Imagens assinadas continuam funcionando com `unoptimized`.
+  - Não há erro `resolved to private ip`.
+  - Não há 404 de imagem local inexistente.
+  - Chamadas ao Supabase Storage por request foram reduzidas ou justificadas.
+  - O build passa.
+  - Os tempos antes/depois são registrados.
+
+  **Validações obrigatórias:**
+
+  ```bash
+  npm run prisma:validate
+  npm run typecheck
+  npm run lint
+  npm run build
+  npx prisma migrate status
+
 
 
 ## Sequenciamento resumido

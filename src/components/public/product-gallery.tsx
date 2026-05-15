@@ -27,6 +27,8 @@ export function ProductGallery({
       <div className="group relative aspect-[4/3] overflow-hidden rounded-lg bg-agromassa-ink">
         <ProductCardImage
           alt={selectedImage.altText}
+          priority
+          sizes="(max-width: 1024px) 100vw, 58vw"
           src={selectedImage.publicUrl}
         />
         {isFeatured ? (
@@ -51,7 +53,11 @@ export function ProductGallery({
               onClick={() => setSelectedImage(image)}
               type="button"
             >
-              <ProductCardImage alt={image.altText} src={image.publicUrl} />
+              <ProductCardImage
+                alt={image.altText}
+                sizes="(max-width: 640px) 33vw, 25vw"
+                src={image.publicUrl}
+              />
             </button>
           ))}
         </div>

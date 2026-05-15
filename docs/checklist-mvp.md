@@ -18,6 +18,7 @@ Use este checklist antes de entregar ou publicar uma nova versao do AgroMassa.
 ## Validacoes tecnicas
 
 - [ ] `npx prisma validate`
+- [ ] `npm run prisma:validate`
 - [ ] `npm run typecheck`
 - [ ] `npm run lint`
 - [ ] `npm run build`
@@ -25,6 +26,7 @@ Use este checklist antes de entregar ou publicar uma nova versao do AgroMassa.
 ## Seed e banco
 
 - [ ] Migracoes foram aplicadas no banco correto
+- [ ] Em ambiente remoto, migrations foram aplicadas com `npx prisma migrate deploy`
 - [ ] `npm run prisma:seed` criou ou atualizou o administrador inicial
 - [ ] `site_settings` possui nome, logo, textos, telefone, WhatsApp, cidade e estado
 - [ ] Admin inicial consegue autenticar

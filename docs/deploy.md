@@ -62,7 +62,15 @@ npx prisma validate
 npm run prisma:generate
 ```
 
-Aplique as migracoes conforme o fluxo escolhido para o ambiente. Em um deploy controlado, rode migracoes contra o banco de producao apenas depois de revisar o schema e o banco alvo.
+Aplique as migracoes conforme o fluxo escolhido para o ambiente. Em um deploy controlado, rode migracoes contra o banco de producao apenas depois de revisar o schema, confirmar o banco alvo e garantir backup ou plano de rollback.
+
+Para ambiente remoto, prefira o fluxo de deploy:
+
+```bash
+npx prisma migrate deploy
+```
+
+Nao use `prisma migrate dev` contra staging ou producao.
 
 Depois, rode o seed principal no ambiente correto:
 
@@ -118,6 +126,8 @@ Depois do deploy, validar:
 - Nao versionar `.env`
 - Nao compartilhar `SUPABASE_SERVICE_ROLE_KEY`
 - Nao usar `NEXT_PUBLIC_SUPABASE_URL` com `/rest/v1`
+- Usar `NEXT_PUBLIC_SUPABASE_URL` como URL base do projeto, por exemplo `https://SEU-PROJETO.supabase.co`
+- Usar `SUPABASE_STORAGE_BUCKET` como nome simples do bucket, sem URL ou caminho
 - Conferir se o bucket `product-images` existe antes de testar upload
 - Trocar senha inicial se ela tiver sido compartilhada durante setup
 - Manter backups do banco antes de mudancas de schema futuras

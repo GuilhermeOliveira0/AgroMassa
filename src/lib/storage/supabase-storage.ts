@@ -1,4 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
+import { existsSync } from "node:fs";
+import path from "node:path";
 
 import {
   productImageExtensionForMimeType,
@@ -18,6 +20,17 @@ export type ProductImageUploadResult = {
   storageKey: string;
 };
 
+const PRODUCT_IMAGE_FALLBACK = "/brand/agromassa1.jpeg";
+const SIGNED_URL_TTL_SECONDS = 60 * 60 * 24;
+const SIGNED_URL_CACHE_TTL_MS = 60 * 60 * 23 * 1000;
+
+type SignedUrlCacheEntry = {
+  expiresAt: number;
+  signedUrl: string;
+};
+
+const signedUrlCache = new Map<string, SignedUrlCacheEntry>();
+
 function getSupabaseStorageConfig() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -32,6 +45,23 @@ function getSupabaseStorageConfig() {
     serviceRoleKey,
     supabaseUrl,
   };
+}
+
+function localPublicFileExists(publicPath: string) {
+  const normalizedPath = publicPath.startsWith("/")
+    ? publicPath.slice(1)
+    : publicPath;
+  const publicFilePath = path.join(process.cwd(), "public", normalizedPath);
+
+  return existsSync(publicFilePath);
+}
+
+function resolveLocalProductImageUrl(publicUrl: string) {
+  if (!publicUrl.startsWith("/")) {
+    return null;
+  }
+
+  return localPublicFileExists(publicUrl) ? publicUrl : PRODUCT_IMAGE_FALLBACK;
 }
 
 function createSupabaseStorageClient() {
@@ -107,14 +137,31 @@ export async function getProductImageDisplayUrl({
   publicUrl: string;
   storageKey: string;
 }) {
+  const localImageUrl = resolveLocalProductImageUrl(publicUrl);
+
+  if (localImageUrl) {
+    return localImageUrl;
+  }
+
+  const cachedSignedUrl = signedUrlCache.get(storageKey);
+  const now = Date.now();
+
+  if (cachedSignedUrl && cachedSignedUrl.expiresAt > now) {
+    return cachedSignedUrl.signedUrl;
+  }
+
   try {
     const { bucket } = getSupabaseStorageConfig();
     const supabase = createSupabaseStorageClient();
     const { data, error } = await supabase.storage
       .from(bucket)
-      .createSignedUrl(storageKey, 60 * 60 * 24);
+      .createSignedUrl(storageKey, SIGNED_URL_TTL_SECONDS);
 
     if (!error && data.signedUrl) {
+      signedUrlCache.set(storageKey, {
+        expiresAt: now + SIGNED_URL_CACHE_TTL_MS,
+        signedUrl: data.signedUrl,
+      });
       return data.signedUrl;
     }
   } catch {

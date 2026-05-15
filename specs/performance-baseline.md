@@ -165,3 +165,13 @@ As medidas abaixo foram feitas no servidor de producao local em `http://127.0.0.
 - T44: acoes rapidas nao foram testadas neste baseline por bloqueio de auth; primeiro baseline comparavel deve registrar tempo de clique apos login funcional.
 - T45: avaliar cache publico com cuidado porque `/` e `/produtos` usam dados de banco e hoje estao `force-dynamic`.
 - T46: investigar tambem warning `MODULE_TYPELESS_PACKAGE_JSON` em scripts diretos, caso futuras metricas usem import TS via Node.
+
+## Observacoes apos T46
+
+- Indices adicionados: migration `20260513000100_add_product_performance_indexes` criou `products_admin_listing_idx`, `product_images_product_gallery_idx` e `products_public_visible_listing_idx`.
+- Metricas otimizadas: `getAdminDashboardMetrics` deixou de fazer oito `count` separados e passou a usar uma query agregada unica preservando os mesmos campos retornados. A query foi validada contra o banco configurado e retornou uma linha com contagens numericas.
+- Dependencias fixadas: todas as entradas `"latest"` do `package.json` foram substituidas pelas versoes ja resolvidas no `package-lock.json`; o lockfile foi sincronizado com `npm install --package-lock-only`.
+- Comandos executados: `npm install --package-lock-only` falhou no sandbox por `EPERM` ao criar temp no npm cache e passou fora do sandbox; `npm run prisma:validate`, `npm run typecheck` e `npm run lint` passaram; `npm run build` falhou no sandbox por `spawn EPERM` e passou fora do sandbox.
+- Migration local: `npx prisma migrate status` passou fora do sandbox e apontou a nova migration como pendente. O datasource ativo aponta para Supabase remoto (`db.cqpbaozhsozmjbulfzvj.supabase.co`), entao a migration nao foi aplicada automaticamente para evitar alterar banco remoto sem confirmacao operacional.
+- Testes manuais: `/produtos` e `/produtos/trator-john-deere-5078e` abriram no browser local sem erros de console capturados. `/admin` e `/admin/produtos` redirecionaram para login; a tentativa automatizada de preencher login no browser embutido foi bloqueada por limitacao do input `email`, entao a validacao visual autenticada do dashboard/listagem admin ficou pendente. A query de metricas foi validada diretamente no banco.
+- Pendencias: aplicar a migration com o fluxo de deploy/migrate do ambiente correto antes de producao; validar visualmente `/admin` e `/admin/produtos` em sessao autenticada; revisar logs de imagem do Next em dev (`resolved to private ip`) fora do escopo da T46.

@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AdminPagination } from "@/components/admin/admin-pagination";
 import { ProductsTable } from "@/components/admin/products-table";
 import { adminListProducts } from "@/features/products/admin-list-products";
 
@@ -19,12 +20,24 @@ function getSearchValue(searchParams: Record<string, string | string[] | undefin
   return value ?? "";
 }
 
+function getPageValue(searchParams: Record<string, string | string[] | undefined>) {
+  const value = searchParams.page;
+  const page = Number.parseInt(
+    Array.isArray(value) ? (value[0] ?? "1") : (value ?? "1"),
+    10,
+  );
+
+  return Number.isFinite(page) && page > 0 ? page : 1;
+}
+
 export default async function AdminProductsPage({
   searchParams,
 }: AdminProductsPageProps) {
   const currentSearchParams = (await searchParams) ?? {};
   const q = getSearchValue(currentSearchParams).trim();
-  const products = await adminListProducts({ q });
+  const page = getPageValue(currentSearchParams);
+  const productPage = await adminListProducts({ page, q });
+  const { products } = productPage;
 
   return (
     <main className="px-4 py-6 sm:px-6 lg:px-8">
@@ -89,9 +102,9 @@ export default async function AdminProductsPage({
       <section className="mt-6">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm font-bold text-agromassa-muted">
-            {products.length === 1
+            {productPage.total === 1
               ? "1 produto encontrado"
-              : `${products.length} produtos encontrados`}
+              : `${productPage.total} produtos encontrados`}
           </p>
           <p className="text-xs font-bold uppercase text-agromassa-muted">
             Inclui rascunhos, ocultos e arquivados
@@ -99,7 +112,16 @@ export default async function AdminProductsPage({
         </div>
 
         {products.length > 0 ? (
-          <ProductsTable products={products} />
+          <>
+            <ProductsTable products={products} />
+            <AdminPagination
+              page={productPage.page}
+              pageSize={productPage.pageSize}
+              searchParams={currentSearchParams}
+              total={productPage.total}
+              totalPages={productPage.totalPages}
+            />
+          </>
         ) : (
           <div className="rounded-lg border border-agromassa-border bg-white px-6 py-12 text-center">
             <p className="text-sm font-black uppercase text-agromassa-green">

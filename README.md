@@ -65,6 +65,12 @@ Validar o schema:
 npx prisma validate
 ```
 
+O projeto tambem possui o script equivalente:
+
+```bash
+npm run prisma:validate
+```
+
 Gerar cliente Prisma:
 
 ```bash
@@ -75,6 +81,12 @@ Rodar migracoes em desenvolvimento:
 
 ```bash
 npm run prisma:migrate
+```
+
+Para deploy controlado em ambiente remoto, revise o banco alvo e use o fluxo de deploy de migrations:
+
+```bash
+npx prisma migrate deploy
 ```
 
 Abrir Prisma Studio:
@@ -107,6 +119,13 @@ Servidor de desenvolvimento:
 npm run dev
 ```
 
+Build de producao local:
+
+```bash
+npm run build
+npm run start
+```
+
 Abrir:
 
 - publico: `http://localhost:3000`
@@ -123,6 +142,20 @@ npm run typecheck
 npm run lint
 npm run build
 ```
+
+Scripts disponiveis no `package.json`:
+
+- `npm run dev`
+- `npm run build`
+- `npm run start`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run prisma:validate`
+- `npm run prisma:generate`
+- `npm run prisma:migrate`
+- `npm run prisma:seed`
+- `npm run prisma:seed:test`
+- `npm run prisma:studio`
 
 ## Fluxo publico
 

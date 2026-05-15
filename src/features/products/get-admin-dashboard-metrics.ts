@@ -1,5 +1,3 @@
-import { ProductStatus } from "@prisma/client";
-
 import { prisma } from "@/lib/db/prisma";
 
 export type AdminDashboardMetrics = {
@@ -14,71 +12,34 @@ export type AdminDashboardMetrics = {
 };
 
 export async function getAdminDashboardMetrics(): Promise<AdminDashboardMetrics> {
-  const [
-    totalProducts,
-    publishedProducts,
-    availableProducts,
-    publiclyVisibleProducts,
-    draftProducts,
-    archivedProducts,
-    featuredProducts,
-    productsMissingMainImage,
-  ] = await Promise.all([
-    prisma.product.count(),
-    prisma.product.count({
-      where: {
-        status: {
-          not: ProductStatus.RASCUNHO,
-        },
-      },
-    }),
-    prisma.product.count({
-      where: {
-        status: ProductStatus.DISPONIVEL,
-      },
-    }),
-    prisma.product.count({
-      where: {
-        isArchived: false,
-        isPublicVisible: true,
-        mainImageId: {
-          not: null,
-        },
-        status: {
-          not: ProductStatus.RASCUNHO,
-        },
-      },
-    }),
-    prisma.product.count({
-      where: {
-        status: ProductStatus.RASCUNHO,
-      },
-    }),
-    prisma.product.count({
-      where: {
-        isArchived: true,
-      },
-    }),
-    prisma.product.count({
-      where: {
-        isFeatured: true,
-      },
-    }),
-    prisma.product.count({
-      where: {
-        mainImageId: null,
-      },
-    }),
-  ]);
+  const [metrics] = await prisma.$queryRaw<AdminDashboardMetrics[]>`
+    SELECT
+      COUNT(*)::int AS "totalProducts",
+      COUNT(*) FILTER (WHERE "status" <> 'rascunho')::int AS "publishedProducts",
+      COUNT(*) FILTER (WHERE "status" = 'disponivel')::int AS "availableProducts",
+      COUNT(*) FILTER (
+        WHERE "is_archived" = false
+          AND "is_public_visible" = true
+          AND "main_image_id" IS NOT NULL
+          AND "status" <> 'rascunho'
+      )::int AS "publiclyVisibleProducts",
+      COUNT(*) FILTER (WHERE "status" = 'rascunho')::int AS "draftProducts",
+      COUNT(*) FILTER (WHERE "is_archived" = true)::int AS "archivedProducts",
+      COUNT(*) FILTER (WHERE "is_featured" = true)::int AS "featuredProducts",
+      COUNT(*) FILTER (WHERE "main_image_id" IS NULL)::int AS "productsMissingMainImage"
+    FROM "products"
+  `;
 
-  return {
-    archivedProducts,
-    availableProducts,
-    draftProducts,
-    featuredProducts,
-    productsMissingMainImage,
-    publiclyVisibleProducts,
-    publishedProducts,
-    totalProducts,
-  };
+  return (
+    metrics ?? {
+      archivedProducts: 0,
+      availableProducts: 0,
+      draftProducts: 0,
+      featuredProducts: 0,
+      productsMissingMainImage: 0,
+      publiclyVisibleProducts: 0,
+      publishedProducts: 0,
+      totalProducts: 0,
+    }
+  );
 }

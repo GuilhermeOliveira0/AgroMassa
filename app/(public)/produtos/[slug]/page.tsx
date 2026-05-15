@@ -6,7 +6,7 @@ import { ProductGallery } from "@/components/public/product-gallery";
 import { getSiteSettings } from "@/features/institutional/get-site-settings";
 import { getPublicProductBySlug } from "@/features/products/get-public-product-by-slug";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 type ProductDetailPageProps = {
   params: Promise<{

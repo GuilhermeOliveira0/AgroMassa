@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { useToast } from "@/components/ui/toast-provider";
+import { ProductCardImage } from "@/components/public/product-card-image";
 import type { AdminProductListItem } from "@/features/products/admin-list-products";
 import { updateProductQuickActionAction } from "@/features/products/admin-product-actions";
 import {
@@ -20,8 +21,17 @@ type ProductsTableProps = {
 };
 
 type ProductQuickActionControlsProps = {
+  actionState: ProductQuickActionState;
+  onActionStateChange: (state: ProductQuickActionState) => void;
   product: AdminProductListItem;
 };
+
+type ProductQuickActionState = Pick<
+  AdminProductListItem,
+  "isArchived" | "isFeatured" | "isPublicVisible" | "status"
+>;
+
+type ProductQuickActionType = AdminQuickProductActionInput["type"];
 
 function getAdminProductHref(productId: string) {
   return `/admin/produtos/${productId}`;
@@ -35,13 +45,34 @@ function formatDate(date: Date) {
   }).format(date);
 }
 
-function ProductBadges({ product }: { product: AdminProductListItem }) {
+function getProductQuickActionState(
+  product: AdminProductListItem,
+): ProductQuickActionState {
+  return {
+    isArchived: product.isArchived,
+    isFeatured: product.isFeatured,
+    isPublicVisible: product.isPublicVisible,
+    status: product.status,
+  };
+}
+
+function buildProductStateMap(products: AdminProductListItem[]) {
+  return Object.fromEntries(
+    products.map((product) => [product.id, getProductQuickActionState(product)]),
+  );
+}
+
+function ProductBadges({
+  actionState,
+}: {
+  actionState: ProductQuickActionState;
+}) {
   return (
     <div className="flex flex-wrap gap-2">
       <span className="rounded-md bg-agromassa-ink px-2 py-1 text-[11px] font-black uppercase text-white">
-        {getProductStatusLabel(product.status)}
+        {getProductStatusLabel(actionState.status)}
       </span>
-      {product.isPublicVisible ? (
+      {actionState.isPublicVisible ? (
         <span className="rounded-md bg-agromassa-green px-2 py-1 text-[11px] font-black uppercase text-white">
           Visivel
         </span>
@@ -50,12 +81,12 @@ function ProductBadges({ product }: { product: AdminProductListItem }) {
           Oculto
         </span>
       )}
-      {product.isArchived ? (
+      {actionState.isArchived ? (
         <span className="rounded-md bg-red-50 px-2 py-1 text-[11px] font-black uppercase text-red-700">
           Arquivado
         </span>
       ) : null}
-      {product.isFeatured ? (
+      {actionState.isFeatured ? (
         <span className="rounded-md bg-agromassa-forest px-2 py-1 text-[11px] font-black uppercase text-white">
           Destaque
         </span>
@@ -74,14 +105,13 @@ function ProductThumb({ product }: { product: AdminProductListItem }) {
   }
 
   return (
-    <div
-      aria-label={product.name}
-      className="h-14 w-16 rounded-md bg-agromassa-ink bg-cover bg-center"
-      role="img"
-      style={{
-        backgroundImage: `url("${product.mainImage.publicUrl.replaceAll('"', '\\"')}"), url("/brand/agromassa1.jpeg")`,
-      }}
-    />
+    <div className="h-14 w-16 overflow-hidden rounded-md bg-agromassa-ink">
+      <ProductCardImage
+        alt={product.name}
+        sizes="64px"
+        src={product.mainImage.publicUrl}
+      />
+    </div>
   );
 }
 
@@ -105,56 +135,82 @@ function getQuickActionSuccessMessage(input: AdminQuickProductActionInput) {
 }
 
 function ProductQuickActionControls({
+  actionState,
+  onActionStateChange,
   product,
 }: ProductQuickActionControlsProps) {
   const router = useRouter();
   const { showToast } = useToast();
   const [isPending, startTransition] = useTransition();
-  const [status, setStatus] = useState(product.status);
-  const [isPublicVisible, setIsPublicVisible] = useState(product.isPublicVisible);
-  const [isFeatured, setIsFeatured] = useState(product.isFeatured);
-  const [isArchived, setIsArchived] = useState(product.isArchived);
+  const [pendingAction, setPendingAction] =
+    useState<ProductQuickActionType | null>(null);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
-  const canPromoteDraft = product.canBePublished || status !== "RASCUNHO";
-  const canToggleVisibility = !isArchived && product.canBePublished;
+  const isActionPending = isPending || pendingAction !== null;
+  const canPromoteDraft =
+    product.canBePublished || actionState.status !== "RASCUNHO";
+  const canToggleVisibility = !actionState.isArchived && product.canBePublished;
+
+  function showQuickActionError(message?: string) {
+    showToast({
+      message: message ?? "Nao foi possivel concluir a acao. Tente novamente.",
+      tone: "validation",
+    });
+  }
 
   function runQuickAction(
     input: AdminQuickProductActionInput,
     rollback: () => void,
-    applySuccessState?: () => void,
+    options: {
+      refreshAfterSuccess?: boolean;
+    } = {},
   ) {
+    if (pendingAction) {
+      return;
+    }
+
+    setPendingAction(input.type);
+
     startTransition(async () => {
-      const result = await updateProductQuickActionAction(input);
+      try {
+        const result = await updateProductQuickActionAction(input);
 
-      if (!result.ok) {
-        rollback();
+        if (!result.ok) {
+          rollback();
+          showQuickActionError(result.formError);
+          return;
+        }
+
         showToast({
-          message:
-            result.formError ?? "Nao foi possivel concluir a acao. Tente novamente.",
-          tone: "validation",
+          message: getQuickActionSuccessMessage(input),
+          tone: "success",
         });
-        return;
-      }
 
-      applySuccessState?.();
-      showToast({
-        message: getQuickActionSuccessMessage(input),
-        tone: "success",
-      });
-      router.refresh();
+        if (options.refreshAfterSuccess) {
+          router.refresh();
+        }
+      } catch {
+        rollback();
+        showQuickActionError();
+      } finally {
+        setPendingAction(null);
+      }
     });
   }
 
   function handleStatusChange(nextStatus: string) {
-    const previousStatus = status;
-    const previousVisibility = isPublicVisible;
-
-    setStatus(nextStatus);
-
-    if (nextStatus === "RASCUNHO") {
-      setIsPublicVisible(false);
+    if (pendingAction) {
+      return;
     }
+
+    const previousState = actionState;
+    const nextState = {
+      ...actionState,
+      isPublicVisible:
+        nextStatus === "RASCUNHO" ? false : actionState.isPublicVisible,
+      status: nextStatus,
+    };
+    onActionStateChange(nextState);
 
     runQuickAction(
       {
@@ -163,69 +219,86 @@ function ProductQuickActionControls({
         type: "status",
       },
       () => {
-        setStatus(previousStatus);
-        setIsPublicVisible(previousVisibility);
+        onActionStateChange(previousState);
       },
     );
   }
 
   function handleVisibilityToggle() {
-    const previousValue = isPublicVisible;
-    const nextValue = !previousValue;
+    if (pendingAction) {
+      return;
+    }
 
-    setIsPublicVisible(nextValue);
+    const previousState = actionState;
+    const nextState = {
+      ...actionState,
+      isPublicVisible: !actionState.isPublicVisible,
+    };
+    onActionStateChange(nextState);
 
     runQuickAction(
       {
-        isPublicVisible: nextValue,
+        isPublicVisible: nextState.isPublicVisible,
         productId: product.id,
         type: "visibility",
       },
       () => {
-        setIsPublicVisible(previousValue);
+        onActionStateChange(previousState);
       },
     );
   }
 
   function handleFeaturedToggle() {
-    const previousValue = isFeatured;
-    const nextValue = !previousValue;
+    if (pendingAction) {
+      return;
+    }
 
-    setIsFeatured(nextValue);
+    const previousState = actionState;
+    const nextState = {
+      ...actionState,
+      isFeatured: !actionState.isFeatured,
+    };
+    onActionStateChange(nextState);
 
     runQuickAction(
       {
-        isFeatured: nextValue,
+        isFeatured: nextState.isFeatured,
         productId: product.id,
         type: "featured",
       },
       () => {
-        setIsFeatured(previousValue);
+        onActionStateChange(previousState);
       },
     );
   }
 
   function handleArchiveToggle() {
-    const previousArchived = isArchived;
-    const previousVisibility = isPublicVisible;
-    const nextArchived = !previousArchived;
-
-    setIsConfirmDialogOpen(false);
-    setIsArchived(nextArchived);
-
-    if (nextArchived) {
-      setIsPublicVisible(false);
+    if (pendingAction) {
+      return;
     }
+
+    const previousState = actionState;
+    const nextState = {
+      ...actionState,
+      isArchived: !actionState.isArchived,
+      isPublicVisible: !actionState.isArchived
+        ? false
+        : actionState.isPublicVisible,
+    };
+    setIsConfirmDialogOpen(false);
+    onActionStateChange(nextState);
 
     runQuickAction(
       {
-        isArchived: nextArchived,
+        isArchived: nextState.isArchived,
         productId: product.id,
         type: "archive",
       },
       () => {
-        setIsArchived(previousArchived);
-        setIsPublicVisible(previousVisibility);
+        onActionStateChange(previousState);
+      },
+      {
+        refreshAfterSuccess: true,
       },
     );
   }
@@ -246,9 +319,9 @@ function ProductQuickActionControls({
           </span>
           <select
             className="min-h-9 rounded-md border border-agromassa-border bg-white px-3 text-xs font-black text-agromassa-ink outline-none transition focus:border-agromassa-forest disabled:cursor-not-allowed disabled:bg-agromassa-cream"
-            disabled={isPending}
+            disabled={isActionPending}
             onChange={(event) => handleStatusChange(event.target.value)}
-            value={status}
+            value={actionState.status}
           >
             {ADMIN_PRODUCT_STATUS_VALUES.map((statusValue) => (
               <option
@@ -260,38 +333,55 @@ function ProductQuickActionControls({
               </option>
             ))}
           </select>
+          {pendingAction === "status" ? (
+            <span className="text-[11px] font-bold text-agromassa-muted">
+              Salvando status...
+            </span>
+          ) : null}
         </label>
 
         <div className="grid gap-2 sm:grid-cols-2">
           <button
             className="inline-flex min-h-9 items-center justify-center rounded-md border border-agromassa-border px-3 text-xs font-black text-agromassa-forest transition hover:border-agromassa-forest disabled:cursor-not-allowed disabled:bg-agromassa-cream disabled:text-agromassa-muted"
-            disabled={isPending || !canToggleVisibility}
+            disabled={isActionPending || !canToggleVisibility}
             onClick={handleVisibilityToggle}
             type="button"
           >
-            {isPublicVisible ? "Ocultar no site" : "Exibir no site"}
+            {pendingAction === "visibility"
+              ? "Salvando..."
+              : actionState.isPublicVisible
+                ? "Ocultar no site"
+                : "Exibir no site"}
           </button>
           <button
             className="inline-flex min-h-9 items-center justify-center rounded-md border border-agromassa-border px-3 text-xs font-black text-agromassa-forest transition hover:border-agromassa-forest disabled:cursor-not-allowed disabled:bg-agromassa-cream disabled:text-agromassa-muted"
-            disabled={isPending}
+            disabled={isActionPending}
             onClick={handleFeaturedToggle}
             type="button"
           >
-            {isFeatured ? "Remover destaque" : "Marcar destaque"}
+            {pendingAction === "featured"
+              ? "Salvando..."
+              : actionState.isFeatured
+                ? "Remover destaque"
+                : "Marcar destaque"}
           </button>
         </div>
 
         <button
           className={`inline-flex min-h-9 items-center justify-center rounded-md px-3 text-xs font-black transition ${
-            isArchived
+            actionState.isArchived
               ? "border border-agromassa-border bg-white text-agromassa-forest hover:border-agromassa-forest"
               : "border border-red-200 bg-white text-red-700 hover:border-red-600"
           }`}
-          disabled={isPending}
+          disabled={isActionPending}
           onClick={() => setIsConfirmDialogOpen(true)}
           type="button"
         >
-          {isArchived ? "Restaurar produto" : "Arquivar produto"}
+          {pendingAction === "archive"
+            ? "Salvando..."
+            : actionState.isArchived
+              ? "Restaurar produto"
+              : "Arquivar produto"}
         </button>
 
         {product.publicationBlockReason ? (
@@ -308,17 +398,17 @@ function ProductQuickActionControls({
               Confirmacao
             </p>
             <h3 className="mt-2 text-2xl font-black text-agromassa-ink">
-              {isArchived ? "Restaurar produto?" : "Arquivar produto?"}
+              {actionState.isArchived ? "Restaurar produto?" : "Arquivar produto?"}
             </h3>
             <p className="mt-3 text-sm leading-6 text-agromassa-muted">
-              {isArchived
+              {actionState.isArchived
                 ? "O produto voltara para a base ativa, mas permanecera oculto no site ate que voce ajuste a visibilidade."
                 : "O produto sera arquivado e deixara de ficar visivel no site ate que seja restaurado."}
             </p>
             <div className="mt-5 flex flex-wrap justify-end gap-3">
               <button
                 className="inline-flex min-h-10 items-center justify-center rounded-md border border-agromassa-border px-4 text-sm font-black text-agromassa-forest transition hover:border-agromassa-forest"
-                disabled={isPending}
+                disabled={isActionPending}
                 onClick={() => setIsConfirmDialogOpen(false)}
                 type="button"
               >
@@ -326,15 +416,19 @@ function ProductQuickActionControls({
               </button>
               <button
                 className={`inline-flex min-h-10 items-center justify-center rounded-md px-4 text-sm font-black text-white transition ${
-                  isArchived
+                  actionState.isArchived
                     ? "bg-agromassa-forest hover:bg-agromassa-ink"
                     : "bg-red-700 hover:bg-red-800"
                 }`}
-                disabled={isPending}
+                disabled={isActionPending}
                 onClick={handleArchiveToggle}
                 type="button"
               >
-                {isArchived ? "Confirmar restauracao" : "Confirmar arquivamento"}
+                {pendingAction === "archive"
+                  ? "Salvando..."
+                  : actionState.isArchived
+                    ? "Confirmar restauracao"
+                    : "Confirmar arquivamento"}
               </button>
             </div>
           </div>
@@ -345,6 +439,20 @@ function ProductQuickActionControls({
 }
 
 export function ProductsTable({ products }: ProductsTableProps) {
+  const [productStates, setProductStates] = useState(() =>
+    buildProductStateMap(products),
+  );
+
+  function setProductActionState(
+    productId: string,
+    state: ProductQuickActionState,
+  ) {
+    setProductStates((currentStates) => ({
+      ...currentStates,
+      [productId]: state,
+    }));
+  }
+
   return (
     <div className="overflow-hidden rounded-lg border border-agromassa-border bg-white">
       <div className="hidden overflow-x-auto lg:block">
@@ -388,7 +496,12 @@ export function ProductsTable({ products }: ProductsTableProps) {
                   </p>
                 </td>
                 <td className="px-5 py-4 align-top">
-                  <ProductBadges product={product} />
+                  <ProductBadges
+                    actionState={
+                      productStates[product.id] ??
+                      getProductQuickActionState(product)
+                    }
+                  />
                 </td>
                 <td className="px-5 py-4 align-top text-xs font-bold text-agromassa-muted">
                   <p>Criado em {formatDate(product.createdAt)}</p>
@@ -397,6 +510,13 @@ export function ProductsTable({ products }: ProductsTableProps) {
                 <td className="px-5 py-4 align-top">
                   <ProductQuickActionControls
                     key={`${product.id}-${product.updatedAt.toISOString()}`}
+                    actionState={
+                      productStates[product.id] ??
+                      getProductQuickActionState(product)
+                    }
+                    onActionStateChange={(state) =>
+                      setProductActionState(product.id, state)
+                    }
                     product={product}
                   />
                 </td>
@@ -426,7 +546,11 @@ export function ProductsTable({ products }: ProductsTableProps) {
             </Link>
 
             <div className="mt-4">
-              <ProductBadges product={product} />
+              <ProductBadges
+                actionState={
+                  productStates[product.id] ?? getProductQuickActionState(product)
+                }
+              />
             </div>
 
             <dl className="mt-4 grid grid-cols-2 gap-3 text-xs">
@@ -467,6 +591,12 @@ export function ProductsTable({ products }: ProductsTableProps) {
             <div className="mt-4">
               <ProductQuickActionControls
                 key={`${product.id}-${product.updatedAt.toISOString()}`}
+                actionState={
+                  productStates[product.id] ?? getProductQuickActionState(product)
+                }
+                onActionStateChange={(state) =>
+                  setProductActionState(product.id, state)
+                }
                 product={product}
               />
             </div>

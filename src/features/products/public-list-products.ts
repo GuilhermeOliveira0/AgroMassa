@@ -241,7 +241,7 @@ export async function publicListProductsPage(
   pageSize = PUBLIC_PRODUCTS_PAGE_SIZE,
 ): Promise<PublicProductListPage> {
   const page = Math.max(filters.page, 1);
-  const visibleLimit = page * pageSize;
+  const skip = (page - 1) * pageSize;
   const products = await prisma.product.findMany({
     orderBy: [
       {
@@ -255,20 +255,20 @@ export async function publicListProductsPage(
       },
     ],
     select: publicProductListSelect,
-    take: visibleLimit + 1,
+    skip,
+    take: pageSize + 1,
     where: buildPublicProductWhere(filters),
   });
 
+  const pageProducts = products.slice(0, pageSize);
   const visibleProducts = await Promise.all(
-    products
-      .slice(0, visibleLimit)
-      .filter(isCompletePublicProduct)
-      .map(toPublicProductListItem),
+    pageProducts.filter(isCompletePublicProduct).map(toPublicProductListItem),
   );
+  const hasMore = products.length > pageSize;
 
   return {
-    hasMore: products.length > visibleLimit,
-    nextPage: products.length > visibleLimit ? page + 1 : null,
+    hasMore,
+    nextPage: hasMore ? page + 1 : null,
     page,
     pageSize,
     products: visibleProducts,

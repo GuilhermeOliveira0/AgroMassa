@@ -1,6 +1,5 @@
 import { CatalogFilters } from "@/components/public/catalog-filters";
-import { LoadMoreButton } from "@/components/public/load-more-button";
-import { ProductCard } from "@/components/public/product-card";
+import { PublicProductsList } from "@/components/public/public-products-list";
 import {
   publicListProductBrands,
   publicListProductsPage,
@@ -8,7 +7,7 @@ import {
 import { getSiteSettings } from "@/features/institutional/get-site-settings";
 import { parsePublicProductFilters } from "@/validators/products/public-filters";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 type ProductsPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -22,7 +21,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     publicListProductBrands(),
     getSiteSettings(),
   ]);
-  const { hasMore, nextPage, products } = productPage;
+  const productListKey = JSON.stringify(filters);
 
   return (
     <main className="bg-agromassa-cream">
@@ -45,45 +44,14 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         <div className="mx-auto grid max-w-7xl gap-6">
           <CatalogFilters brands={brands} filters={filters} />
 
-          <div className="flex items-center justify-between gap-4">
-            <p className="text-sm font-bold text-agromassa-muted">
-              {products.length === 1
-                ? "1 produto encontrado"
-                : `${products.length} produtos encontrados`}
-            </p>
-          </div>
-
-          {products.length > 0 ? (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {products.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  whatsappPhone={settings.whatsappDigits}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-lg border border-agromassa-border bg-white px-6 py-12 text-center">
-              <p className="text-sm font-black uppercase text-agromassa-green">
-                Nenhum produto visivel
-              </p>
-              <h2 className="mt-3 text-2xl font-black text-agromassa-ink">
-                Nenhum produto encontrado.
-              </h2>
-              <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-agromassa-muted">
-                Ajuste os filtros ou limpe a busca para voltar ao catalogo
-                completo da AgroMassa.
-              </p>
-            </div>
-          )}
-
-          {hasMore && nextPage ? (
-            <LoadMoreButton
-              nextPage={nextPage}
-              searchParams={currentSearchParams}
-            />
-          ) : null}
+          <PublicProductsList
+            key={productListKey}
+            initialHasMore={productPage.hasMore}
+            initialNextPage={productPage.nextPage}
+            initialProducts={productPage.products}
+            searchParams={currentSearchParams}
+            whatsappPhone={settings.whatsappDigits}
+          />
         </div>
       </section>
     </main>

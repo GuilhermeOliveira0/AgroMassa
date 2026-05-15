@@ -83,7 +83,7 @@ const testProducts: TestProduct[] = [
     publishedAt: new Date("2026-05-01T12:00:00.000Z"),
     image: {
       storageKey: "seed/teste-trator-visivel-com-imagem-main.jpg",
-      publicUrl: "/seed/products/teste-trator-visivel-com-imagem-main.jpg",
+      publicUrl: "/brand/agromassa1.jpeg",
       originalFilename: "teste-trator-visivel-com-imagem-main.jpg",
       width: 1200,
       height: 800,
@@ -112,7 +112,7 @@ const testProducts: TestProduct[] = [
     publishedAt: null,
     image: {
       storageKey: "seed/teste-produto-rascunho-main.jpg",
-      publicUrl: "/seed/products/teste-produto-rascunho-main.jpg",
+      publicUrl: "/brand/agromassa1.jpeg",
       originalFilename: "teste-produto-rascunho-main.jpg",
       width: 1200,
       height: 800,
@@ -141,7 +141,7 @@ const testProducts: TestProduct[] = [
     publishedAt: new Date("2026-05-02T12:00:00.000Z"),
     image: {
       storageKey: "seed/teste-produto-arquivado-main.jpg",
-      publicUrl: "/seed/products/teste-produto-arquivado-main.jpg",
+      publicUrl: "/brand/agromassa1.jpeg",
       originalFilename: "teste-produto-arquivado-main.jpg",
       width: 1200,
       height: 800,
@@ -170,7 +170,7 @@ const testProducts: TestProduct[] = [
     publishedAt: new Date("2026-05-03T12:00:00.000Z"),
     image: {
       storageKey: "seed/teste-produto-invisivel-main.jpg",
-      publicUrl: "/seed/products/teste-produto-invisivel-main.jpg",
+      publicUrl: "/brand/agromassa1.jpeg",
       originalFilename: "teste-produto-invisivel-main.jpg",
       width: 1200,
       height: 800,
@@ -200,7 +200,7 @@ const testProducts: TestProduct[] = [
     publishedAt: new Date("2026-05-04T12:00:00.000Z"),
     image: {
       storageKey: "seed/teste-produto-sem-imagem-principal-secondary.jpg",
-      publicUrl: "/seed/products/teste-produto-sem-imagem-principal-secondary.jpg",
+      publicUrl: "/brand/agromassa1.jpeg",
       originalFilename: "teste-produto-sem-imagem-principal-secondary.jpg",
       width: 1200,
       height: 800,
